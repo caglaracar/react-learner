@@ -1,0 +1,114 @@
+{
+  "id": "use-effect",
+  "title": "6. useEffect — Yan Etkiler ve Yaşam Döngüsü",
+  "description": "Component yaşam döngüsünü yönetin: mount, update, unmount. API çağrıları, event listener'lar, timer'lar ve subscription'lar. useEffect, React'in dış dünyayla iletişim kurma yoludur.",
+  "level": "beginner",
+  "lessons": [
+    {
+      "id": "useEffect-what-is",
+      "title": "useEffect Nedir? Side Effect Ne Demek?",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "React component'leri PURE (saf) fonksiyonlar olmalıdır: aynı props ile aynı JSX döndürmelidir. Ama gerçek uygulamalarda 'yan etkiler' (side effects) kaçınılmazdır: API'den veri çekmek, localStorage'a yazmak, DOM'u direkt manipüle etmek, timer kurmak, WebSocket bağlantısı açmak. İşte useEffect, bu yan etkileri güvenli şekilde gerçekleştirmenizi sağlar."
+        },
+        {
+          "type": "text",
+          "content": "useEffect, component render edildikten SONRA çalışır. Yani React önce ekranı günceller, sonra effect'inizi çalıştırır. Bu sayede kullanıcı UI'ın donmasını görmez — ekran hemen güncellenir, veri çekme gibi ağır işler arka planda olur."
+        },
+        {
+          "type": "code",
+          "title": "useEffect Anatomy — Yapı Analizi",
+          "language": "tsx",
+          "content": "import { useEffect } from 'react'\n\nfunction MyComponent() {\n  useEffect(() => {\n    // ────────────────────────────────────\n    // SETUP (Kurulum) fonksiyonu\n    // Component render'dan SONRA çalışır\n    // Yan etkilerinizi buraya yazın\n    // ────────────────────────────────────\n    console.log('Effect çalıştı!')\n\n    // API çağrısı, event listener, timer vb.\n    const timer = setInterval(() => {\n      console.log('Tick!')\n    }, 1000)\n\n    return () => {\n      // ──────────────────────────────────\n      // CLEANUP (Temizlik) fonksiyonu\n      // Component unmount olduğunda VEYA\n      // effect yeniden çalışmadan ÖNCE çağrılır\n      // ──────────────────────────────────\n      clearInterval(timer)  // Timer'ı temizle\n      console.log('Cleanup çalıştı!')\n    }\n  }, [/* dependency array */])\n  //    ↑ Bu dizi, effect'in NE ZAMAN çalışacağını belirler\n\n  return <div>Component</div>\n}"
+        },
+        {
+          "type": "tip",
+          "content": "useEffect'in üç parçası: 1) Setup fonksiyonu — yan etkiyi gerçekleştirir. 2) Cleanup fonksiyonu (opsiyonel) — yan etkiyi temizler. 3) Dependency array — effect'in ne zaman çalışacağını kontrol eder. Bu üçünü iyi anlamak, React'te hata yapmamak için kritiktir."
+        }
+      ]
+    },
+    {
+      "id": "useEffect-dependency",
+      "title": "Dependency Array — Effect Ne Zaman Çalışır?",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "Dependency array, useEffect'in en önemli parçasıdır. Üç farklı kullanım şekli vardır ve her biri farklı davranır. Yanlış kullanım sonsuz döngüye veya eksik güncellemelere yol açar."
+        },
+        {
+          "type": "code",
+          "title": "3 Farklı Dependency Pattern",
+          "language": "tsx",
+          "content": "// ═══════════════════════════════════════════\n// 1. DEPENDENCY ARRAY YOK — Her render'da çalışır\n// ═══════════════════════════════════════════\nuseEffect(() => {\n  console.log('Her render sonrası çalışır')\n  // Component her güncellendiğinde tetiklenir\n  // ⚠️ Dikkat: API çağrısı burada yaparsanız\n  //    her state değişiminde istek gider!\n})\n// Ne zaman kullan: Hemen hemen HİÇBİR ZAMAN.\n// Debug amaçlı kullanılabilir.\n\n// ═══════════════════════════════════════════\n// 2. BOŞ DİZİ [] — Sadece mount'ta çalışır (1 kez)\n// ═══════════════════════════════════════════\nuseEffect(() => {\n  console.log('Component DOM\\'a eklendi (mounted)')\n  // Sadece component ilk kez görüntülendiğinde çalışır\n\n  return () => {\n    console.log('Component DOM\\'dan kaldırıldı (unmounted)')\n    // Sadece component tamamen kaldırıldığında çalışır\n  }\n}, [])  // ← Boş dizi = \"hiçbir şeye bağlı değilim\"\n// Ne zaman kullan:\n// ✅ İlk API çağrısı (sayfa yüklendiğinde veri çek)\n// ✅ Event listener ekle/kaldır\n// ✅ WebSocket bağlantısı aç/kapat\n// ✅ 3. parti kütüphane başlat\n\n// ═══════════════════════════════════════════\n// 3. DEĞİŞKENLİ DİZİ [a, b] — Bağımlılıklar değişince çalışır\n// ═══════════════════════════════════════════\nuseEffect(() => {\n  console.log(`userId değişti: ${userId}`)\n  fetchUserData(userId)  // userId değişince yeni veri çek\n\n  return () => {\n    // Önceki effect'in temizliği\n    // (eski userId için yapılan istek iptal edilebilir)\n  }\n}, [userId])  // ← userId değişince effect yeniden çalışır\n// Ne zaman kullan:\n// ✅ Belirli bir state/prop değiştiğinde API çağrısı\n// ✅ Arama input'u değiştiğinde filtreleme\n// ✅ Seçili öğe değiştiğinde detay getirme"
+        },
+        {
+          "type": "code",
+          "title": "Gerçek Dünya: Kullanıcı Detayı Çekme",
+          "language": "tsx",
+          "content": "interface User {\n  id: number\n  name: string\n  email: string\n}\n\nfunction UserDetail({ userId }: { userId: number }) {\n  const [user, setUser] = useState<User | null>(null)\n  const [loading, setLoading] = useState(true)\n  const [error, setError] = useState<string | null>(null)\n\n  useEffect(() => {\n    // Her userId değişiminde bu effect çalışır\n    let cancelled = false  // Cleanup flag (race condition önleme)\n\n    const fetchUser = async () => {\n      setLoading(true)\n      setError(null)\n\n      try {\n        const response = await fetch(`/api/users/${userId}`)\n        if (!response.ok) throw new Error('Kullanıcı bulunamadı')\n        const data = await response.json()\n\n        // Component hala mount'taysa güncelle\n        if (!cancelled) {\n          setUser(data)\n        }\n      } catch (err) {\n        if (!cancelled) {\n          setError(err instanceof Error ? err.message : 'Hata oluştu')\n        }\n      } finally {\n        if (!cancelled) {\n          setLoading(false)\n        }\n      }\n    }\n\n    fetchUser()\n\n    return () => {\n      cancelled = true  // Eski istek sonuçlarını yoksay\n      // userId hızlı değiştiğinde eski isteklerin sonuçları\n      // yeni userId'nin verisini ezmesini engeller\n    }\n  }, [userId])  // userId değişince yeniden çalışır\n\n  if (loading) return <p>Yükleniyor...</p>\n  if (error) return <p>Hata: {error}</p>\n  if (!user) return <p>Kullanıcı bulunamadı</p>\n\n  return (\n    <div>\n      <h2>{user.name}</h2>\n      <p>{user.email}</p>\n    </div>\n  )\n}"
+        },
+        {
+          "type": "preview",
+          "title": "UserDetail component'i — 3 farklı durum",
+          "content": "<div style='font-family: system-ui; display: flex; gap: 12px;'><div style='flex: 1; padding: 14px; border: 1px solid #3f3f46; border-radius: 10px; background: #18181b; text-align: center;'><div style='font-size: 10px; color: #71717a; margin-bottom: 6px;'>loading = true</div><div style='width: 20px; height: 20px; border: 2px solid #a78bfa; border-top-color: transparent; border-radius: 50%; margin: 8px auto;'></div><p style='font-size: 12px; color: #a1a1aa; margin: 4px 0 0;'>Yükleniyor...</p></div><div style='flex: 1; padding: 14px; border: 1px solid #ef444444; border-radius: 10px; background: #18181b; text-align: center;'><div style='font-size: 10px; color: #71717a; margin-bottom: 6px;'>error = true</div><p style='font-size: 14px; margin: 4px 0 0;'>❌</p><p style='font-size: 12px; color: #f87171; margin: 4px 0 0;'>Hata: Kullanıcı bulunamadı</p></div><div style='flex: 1; padding: 14px; border: 1px solid #4ade8044; border-radius: 10px; background: #18181b;'><div style='font-size: 10px; color: #71717a; margin-bottom: 6px;'>success</div><h2 style='margin: 0; font-size: 14px; color: #e4e4e7;'>Ali</h2><p style='font-size: 12px; color: #a1a1aa; margin: 2px 0 0;'>ali@mail.com</p></div></div>"
+        },
+        {
+          "type": "warning",
+          "content": "Race Condition: Kullanıcı hızlıca 3 farklı userId'ye tıklarsa, 3 API isteği paralel gider. Hangisi önce döner bilinmez! cancelled flag olmadan, userId=1'in yanıtı userId=3'ün yanıtını ezebilir. Sektörde buna 'stale closure' veya 'race condition' denir. TanStack Query bu sorunu otomatik çözer."
+        }
+      ]
+    },
+    {
+      "id": "useEffect-cleanup",
+      "title": "Cleanup Fonksiyonu — Bellek Sızıntısını Önle",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "Cleanup fonksiyonu, useEffect'ten return edilen fonksiyondur. İki durumda çağrılır: 1) Component unmount olduğunda (DOM'dan kaldırıldığında). 2) Effect yeniden çalışmadan hemen önce (dependency değiştiğinde eski effect temizlenir). Cleanup yapmayı unutursanız BELLEK SIZINTISI (memory leak) oluşur!"
+        },
+        {
+          "type": "code",
+          "title": "Cleanup Örnekleri — Timer, Event Listener, Subscription",
+          "language": "tsx",
+          "content": "// 1. Timer (setInterval / setTimeout)\nfunction Clock() {\n  const [time, setTime] = useState(new Date())\n\n  useEffect(() => {\n    const interval = setInterval(() => {\n      setTime(new Date())  // Her saniye güncelle\n    }, 1000)\n\n    return () => clearInterval(interval)\n    // ↑ Component kaldırıldığında timer'ı durdur\n    // Yoksa arka planda çalışmaya devam eder!\n  }, [])\n\n  return <p>{time.toLocaleTimeString('tr-TR')}</p>\n}\n\n// 2. Event Listener (window, document)\nfunction WindowSize() {\n  const [size, setSize] = useState({\n    width: window.innerWidth,\n    height: window.innerHeight,\n  })\n\n  useEffect(() => {\n    const handleResize = () => {\n      setSize({\n        width: window.innerWidth,\n        height: window.innerHeight,\n      })\n    }\n\n    window.addEventListener('resize', handleResize)\n\n    return () => window.removeEventListener('resize', handleResize)\n    // ↑ Listener'ı kaldır — yoksa her mount'ta yeni listener eklenir\n    // 10 kez mount/unmount = 10 listener = bellek sızıntısı!\n  }, [])\n\n  return <p>{size.width} x {size.height}</p>\n}\n\n// 3. AbortController ile API isteği iptal\nfunction SearchResults({ query }: { query: string }) {\n  const [results, setResults] = useState([])\n\n  useEffect(() => {\n    const controller = new AbortController()\n\n    fetch(`/api/search?q=${query}`, {\n      signal: controller.signal,  // İptal sinyali bağla\n    })\n      .then(res => res.json())\n      .then(data => setResults(data))\n      .catch(err => {\n        if (err.name !== 'AbortError') {\n          console.error('Hata:', err)\n        }\n      })\n\n    return () => controller.abort()  // Önceki isteği iptal et\n    // query hızlı değişince eski istekler gerçekten iptal olur\n    // Network sekmesinde \"cancelled\" olarak görürsünüz\n  }, [query])\n\n  return <ul>{results.map(r => <li key={r.id}>{r.title}</li>)}</ul>\n}"
+        },
+        {
+          "type": "tip",
+          "content": "Cleanup gereken durumlar: setInterval/setTimeout, addEventListener, WebSocket/EventSource, IntersectionObserver/MutationObserver/ResizeObserver, AbortController, 3. parti kütüphane instance'ları. Kural: Setup'ta bir şey BAŞLATIYORSAN, cleanup'ta DURDUR."
+        },
+        {
+          "type": "demo",
+          "content": "useEffect yaşam döngüsünü canlı izle — setup, cleanup ve dependency değişimlerini gör:",
+          "demoId": "timer"
+        }
+      ]
+    },
+    {
+      "id": "useEffect-pitfalls",
+      "title": "useEffect Tuzakları ve Anti-Pattern'ler",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "useEffect, React'in en çok yanlış kullanılan hook'udur. Birçok durumda useEffect'e ihtiyacınız YOKTUR. React ekibi bile 'You Might Not Need an Effect' başlıklı bir doküman yazmıştır."
+        },
+        {
+          "type": "code",
+          "title": "Anti-Pattern'ler — useEffect Kullanma!",
+          "language": "tsx",
+          "content": "// ❌ Anti-Pattern 1: Props'tan state türetme\nfunction UserGreeting({ firstName, lastName }: Props) {\n  const [fullName, setFullName] = useState('')\n\n  useEffect(() => {\n    setFullName(`${firstName} ${lastName}`)  // Gereksiz!\n  }, [firstName, lastName])\n  // Bu useEffect + useState = fazladan 1 render!\n}\n\n// ✅ Doğrusu: Direkt hesapla\nfunction UserGreeting({ firstName, lastName }: Props) {\n  const fullName = `${firstName} ${lastName}`  // Her render'da hesaplanır\n  // useEffect YOK, ekstra render YOK, daha hızlı!\n}\n\n// ❌ Anti-Pattern 2: Event'e tepki verme\nfunction Form() {\n  const [submitted, setSubmitted] = useState(false)\n\n  useEffect(() => {\n    if (submitted) {\n      sendAnalytics('form_submitted')  // Gereksiz useEffect!\n    }\n  }, [submitted])\n}\n\n// ✅ Doğrusu: Event handler içinde yap\nfunction Form() {\n  const handleSubmit = () => {\n    submitForm(data)\n    sendAnalytics('form_submitted')  // Direkt burada!\n  }\n}\n\n// ❌ Anti-Pattern 3: Sonsuz döngü\nfunction InfiniteLoop() {\n  const [data, setData] = useState([])\n\n  useEffect(() => {\n    setData([...data, 'new'])  // data değişir → effect tekrar çalışır\n  }, [data])  // data dependency → SONSUZ DÖNGÜ!\n}\n\n// ✅ Doğrusu: Updater pattern kullan\nuseEffect(() => {\n  setData(prev => [...prev, 'new'])  // prev kullan, data'yı dependency'den çıkar\n}, [])  // Sadece mount'ta çalışır"
+        },
+        {
+          "type": "code",
+          "title": "useEffect Kullanılması GEREKEN Durumlar",
+          "language": "tsx",
+          "content": "// ✅ 1. Dış sistemlerle senkronizasyon (API, WebSocket, timer)\nuseEffect(() => {\n  const ws = new WebSocket('wss://api.example.com')\n  ws.onmessage = (event) => setMessages(prev => [...prev, event.data])\n  return () => ws.close()\n}, [])\n\n// ✅ 2. DOM manipülasyonu (React dışı)\nuseEffect(() => {\n  document.title = `(${unreadCount}) Mesajlar`\n}, [unreadCount])\n\n// ✅ 3. 3. parti kütüphane başlatma\nuseEffect(() => {\n  const chart = new Chart(canvasRef.current, config)\n  return () => chart.destroy()\n}, [])\n\n// ✅ 4. Scroll pozisyonu izleme\nuseEffect(() => {\n  const handleScroll = () => setScrollY(window.scrollY)\n  window.addEventListener('scroll', handleScroll, { passive: true })\n  return () => window.removeEventListener('scroll', handleScroll)\n}, [])"
+        },
+        {
+          "type": "warning",
+          "content": "StrictMode'da (geliştirme ortamı) React, her component'i 2 KEZ mount eder: mount → unmount → mount. Bu, cleanup fonksiyonunuzu doğru yazdığınızı test etmek içindir. Production'da bu davranış YOKTUR. Eğer effect'iniz 2 kez çalışınca bozuluyorsa, cleanup fonksiyonunuz eksik veya hatalıdır."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "id": "jsx-basics",
+  "title": "1. JSX — React'in Kalbi",
+  "description": "JSX, React'te UI tanımlamanın temel yoludur. HTML'e benzer ama JavaScript'in tüm gücünü arkasına alır. Bu bölümde JSX'in ne olduğunu, nasıl çalıştığını, kurallarını ve pratik kullanım kalıplarını en ince detayına kadar öğreneceksiniz.",
+  "level": "beginner",
+  "lessons": [
+    {
+      "id": "jsx-what-is",
+      "title": "JSX Nedir ve Neden Var?",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "JSX (JavaScript XML), JavaScript dosyalarınızın içine HTML benzeri kod yazmanızı sağlayan bir syntax uzantısıdır. Tarayıcı JSX'i direkt anlayamaz — Babel veya SWC gibi derleyiciler (compiler) JSX kodunuzu React.createElement() çağrılarına dönüştürür. Yani JSX bir 'syntactic sugar'dır, yani altında JavaScript fonksiyon çağrıları yatar."
+        },
+        {
+          "type": "text",
+          "content": "Peki neden JSX kullanıyoruz? Çünkü UI oluşturmak aslında veriyi görselleştirmektir ve bu iş en iyi şekilde 'declarative' (bildirici) bir yaklaşımla yapılır. JSX olmadan React.createElement() ile iç içe fonksiyon çağrıları yazmak zorunda kalırdınız — bu okunması ve bakımı çok zor bir koddur. JSX, UI yapınızı bir bakışta anlamanızı sağlar."
+        },
+        {
+          "type": "code",
+          "title": "JSX vs React.createElement — Arka Planda Ne Olur?",
+          "language": "tsx",
+          "content": "// Siz bunu yazarsınız (JSX):\nconst element = (\n  <div className=\"card\">\n    <h1>Merhaba!</h1>\n    <p>Bu bir JSX örneği</p>\n  </div>\n)\n\n// Derleyici (Babel/SWC) bunu üretir:\nconst element = React.createElement(\n  'div',\n  { className: 'card' },\n  React.createElement('h1', null, 'Merhaba!'),\n  React.createElement('p', null, 'Bu bir JSX örneği')\n)\n\n// İkisi de TAMAMEN aynı şeydir.\n// JSX sadece okunabilirlik ve geliştirme kolaylığı sağlar.\n// React 17+ ile 'jsx runtime' kullanılır, artık React import'una bile gerek yok."
+        },
+        {
+          "type": "preview",
+          "title": "JSX kodunun tarayıcıdaki çıktısı",
+          "content": "<div style='border: 1px solid #3f3f46; border-radius: 12px; padding: 20px; background: #18181b;'><h1 style='font-size: 22px; font-weight: bold; color: #e4e4e7; margin: 0 0 8px 0;'>Merhaba!</h1><p style='color: #a1a1aa; margin: 0; font-size: 14px;'>Bu bir JSX örneği</p></div><p style='color: #71717a; font-size: 12px; margin-top: 10px;'>↑ <code style=\"color:#a78bfa;\">className=\"card\"</code> bir CSS class'ı ekler. JSX'te <code style=\"color:#f87171;\">class</code> yerine <code style=\"color:#4ade80;\">className</code> yazılır!</p>"
+        },
+        {
+          "type": "tip",
+          "content": "Vite projelerinde JSX dönüşümünü SWC (Speedy Web Compiler) yapar. SWC, Rust ile yazıldığı için Babel'den 20-70x daha hızlıdır. Bu yüzden Vite ile geliştirme deneyimi çok akıcıdır — dosyayı kaydeder kaydetmez değişiklik tarayıcıya yansır (HMR - Hot Module Replacement)."
+        }
+      ]
+    },
+    {
+      "id": "jsx-rules",
+      "title": "JSX'in Altın Kuralları",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "JSX, HTML'e benzese de aslında JavaScript'tir. Bu yüzden bazı katı kuralları vardır. Bu kuralları bilmezseniz sürekli hata alırsınız."
+        },
+        {
+          "type": "code",
+          "title": "Kural 1: Tek Bir Kök Element Döndür",
+          "language": "tsx",
+          "content": "// ❌ HATA: Birden fazla kök element\nfunction App() {\n  return (\n    <h1>Başlık</h1>\n    <p>Paragraf</p>\n  )\n}\n// Hata: Adjacent JSX elements must be wrapped in an enclosing tag\n\n// ✅ Çözüm 1: Bir div ile sar\nfunction App() {\n  return (\n    <div>\n      <h1>Başlık</h1>\n      <p>Paragraf</p>\n    </div>\n  )\n}\n\n// ✅ Çözüm 2: Fragment kullan (DOM'a ekstra element EKLEMEZ!)\nfunction App() {\n  return (\n    <>\n      <h1>Başlık</h1>\n      <p>Paragraf</p>\n    </>\n  )\n}\n// <> ... </> = React.Fragment kısaltması\n// DOM'da gereksiz div oluşturmaz — daha temiz HTML çıktısı"
+        },
+        {
+          "type": "code",
+          "title": "Kural 2: HTML Attribute İsimleri Farklıdır",
+          "language": "tsx",
+          "content": "// JSX'te HTML attribute'ları camelCase yazılır\n// Çünkü JSX aslında JavaScript objesidir\n\n// ❌ HTML syntax (JSX'te ÇALIŞMAZ)\n<div class=\"container\">        // class = JS reserved keyword!\n<label for=\"email\">Email</label> // for = JS reserved keyword!\n<input tabindex=\"1\" />           // tabindex değil\n<img onclick=\"handleClick()\" />  // string değil, fonksiyon olmalı\n\n// ✅ JSX syntax\n<div className=\"container\">       // class → className\n<label htmlFor=\"email\">Email</label> // for → htmlFor\n<input tabIndex={1} />              // tabindex → tabIndex (camelCase)\n<img onClick={handleClick} />       // fonksiyon referansı geçilir\n\n// Style objesi de camelCase:\n<div style={{\n  backgroundColor: 'red',    // background-color → backgroundColor\n  fontSize: '16px',           // font-size → fontSize\n  marginTop: '10px',          // margin-top → marginTop\n  borderRadius: '8px'         // border-radius → borderRadius\n}} />"
+        },
+        {
+          "type": "code",
+          "title": "Kural 3: Tüm Etiketler Kapatılmalıdır",
+          "language": "tsx",
+          "content": "// HTML'de bazı etiketler kapatılmadan yazılabilir\n// JSX'te TÜMÜ kapatılmalıdır!\n\n// ❌ HTML'de geçerli ama JSX'te HATA\n<img src=\"photo.jpg\">\n<input type=\"text\">\n<br>\n<hr>\n\n// ✅ JSX'te self-closing tag kullan\n<img src=\"photo.jpg\" />\n<input type=\"text\" />\n<br />\n<hr />\n\n// Component'ler de aynı kurala uyar:\n<MyComponent />          // Children yoksa self-closing\n<MyComponent>içerik</MyComponent>  // Children varsa aç-kapat"
+        },
+        {
+          "type": "warning",
+          "content": "En sık yapılan hata: className yerine class yazmak! Tarayıcı konsolu 'Warning: Invalid DOM property class. Did you mean className?' uyarısı verir. Aynı şekilde for yerine htmlFor kullanın."
+        }
+      ]
+    },
+    {
+      "id": "jsx-expressions",
+      "title": "JSX İçinde JavaScript Kullanma — Süslü Parantez {}",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "JSX'in en güçlü özelliği: süslü parantez {} içinde HERHANGİ bir JavaScript expression'ı (ifade) yazabilirsiniz. Expression = bir DEĞER üreten kod. Değişkenler, fonksiyon çağrıları, matematiksel işlemler, ternary operatör — hepsi expression'dır."
+        },
+        {
+          "type": "code",
+          "title": "Süslü Parantez İçinde Neler Yapabilirsiniz",
+          "language": "tsx",
+          "content": "function UserProfile() {\n  const name = 'Çağlar'\n  const age = 25\n  const isAdmin = true\n  const skills = ['React', 'TypeScript', 'Node.js']\n  const user = { avatar: '/avatar.jpg', role: 'Developer' }\n\n  return (\n    <div>\n      {/* 1. Değişken gösterme */}\n      <h1>{name}</h1>\n      <p>Yaş: {age}</p>\n\n      {/* 2. JavaScript expression'ları */}\n      <p>Doğum yılı: {2025 - age}</p>\n      <p>İsim uzunluğu: {name.length} karakter</p>\n      <p>Büyük harf: {name.toUpperCase()}</p>\n\n      {/* 3. Ternary operatör (koşullu değer) */}\n      <span>{isAdmin ? '👑 Admin' : '👤 Kullanıcı'}</span>\n\n      {/* 4. Fonksiyon çağrısı */}\n      <p>{new Date().toLocaleDateString('tr-TR')}</p>\n\n      {/* 5. Obje property'si */}\n      <img src={user.avatar} alt={user.role} />\n\n      {/* 6. Template literal */}\n      <p>{`Merhaba ${name}, ${age} yaşındasın!`}</p>\n\n      {/* 7. Dizi işlemleri */}\n      <p>Yetenekler: {skills.join(', ')}</p>\n    </div>\n  )\n}"
+        },
+        {
+          "type": "code",
+          "title": "Süslü Parantez İçinde Yapamayacaklarınız",
+          "language": "tsx",
+          "content": "// ❌ BUNLAR ÇALIŞMAZ — statement (ifade değil, komut)\nfunction Bad() {\n  return (\n    <div>\n      {/* if/else KULLANILAMAZ */}\n      {if (true) { return 'evet' }}  // HATA!\n\n      {/* for döngüsü KULLANILAMAZ */}\n      {for (let i = 0; i < 5; i++) { }}  // HATA!\n\n      {/* switch KULLANILAMAZ */}\n      {switch(x) { case 1: break }}  // HATA!\n\n      {/* Obje direkt render edilemez */}\n      {{ name: 'Ali', age: 25 }}  // HATA! Objects are not valid as React child\n    </div>\n  )\n}\n\n// ✅ Bunların yerine expression karşılıklarını kullan:\nfunction Good() {\n  const items = [1, 2, 3, 4, 5]\n  return (\n    <div>\n      {/* if/else → ternary */}\n      {true ? 'evet' : 'hayır'}\n\n      {/* for → map */}\n      {items.map(item => <span key={item}>{item}</span>)}\n\n      {/* Obje → JSON.stringify veya property'lere ayrı eriş */}\n      {JSON.stringify({ name: 'Ali' })}\n    </div>\n  )\n}"
+        },
+        {
+          "type": "preview",
+          "title": "UserProfile component'i ekranda böyle görünür",
+          "content": "<div style='font-family: system-ui; padding: 4px;'><h1 style='font-size: 22px; font-weight: bold; color: #e4e4e7; margin: 0;'>Çağlar</h1><p style='color: #a1a1aa; font-size: 14px; margin: 4px 0;'>Yaş: 25</p><p style='color: #a1a1aa; font-size: 14px; margin: 4px 0;'>Doğum yılı: 2000</p><p style='color: #a1a1aa; font-size: 14px; margin: 4px 0;'>İsim uzunluğu: 6 karakter</p><p style='color: #a1a1aa; font-size: 14px; margin: 4px 0;'>Büyük harf: ÇAĞLAR</p><span style='display: inline-block; padding: 4px 10px; background: #7c3aed33; border: 1px solid #7c3aed55; border-radius: 6px; color: #c4b5fd; font-size: 13px;'>👑 Admin</span><p style='color: #a1a1aa; font-size: 14px; margin: 4px 0;'>Merhaba Çağlar, 25 yaşındasın!</p><p style='color: #a1a1aa; font-size: 14px; margin: 4px 0;'>Yetenekler: React, TypeScript, Node.js</p></div>"
+        },
+        {
+          "type": "tip",
+          "content": "Kural basit: Süslü parantez {} içine SADECE expression (değer üreten kod) yazılabilir. if, for, while, switch gibi statement'lar (komutlar) yazılamaz. Bunların yerine: if → ternary (?:) veya &&, for → .map(), switch → obje map pattern kullanın."
+        }
+      ]
+    },
+    {
+      "id": "jsx-lists",
+      "title": "Listeler ve Key Prop'u — .map() ile Render",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "React'te bir diziyi listeye dönüştürmek için Array.map() kullanılır. map(), dizideki her eleman için bir JSX döndürür. Ancak listelerde KEY prop'u zorunludur — React, hangi elemanın değiştiğini, eklendiğini veya silindiğini KEY ile anlar."
+        },
+        {
+          "type": "code",
+          "title": "Liste Render Etme — Basit ve İleri",
+          "language": "tsx",
+          "content": "// 1. Basit liste\nfunction FruitList() {\n  const fruits = ['Elma', 'Armut', 'Muz', 'Çilek']\n\n  return (\n    <ul>\n      {fruits.map((fruit, index) => (\n        <li key={fruit}>{fruit}</li>\n        // key={fruit} — her elemanı benzersiz tanımlar\n      ))}\n    </ul>\n  )\n}\n\n// 2. Obje dizisi ile liste (gerçek dünya)\ninterface User {\n  id: number\n  name: string\n  email: string\n  isActive: boolean\n}\n\nfunction UserList() {\n  const users: User[] = [\n    { id: 1, name: 'Ali', email: 'ali@mail.com', isActive: true },\n    { id: 2, name: 'Ayşe', email: 'ayse@mail.com', isActive: false },\n    { id: 3, name: 'Veli', email: 'veli@mail.com', isActive: true },\n  ]\n\n  return (\n    <div>\n      <h2>Kullanıcılar ({users.length})</h2>\n      {users\n        .filter(user => user.isActive)  // Sadece aktif olanlar\n        .map(user => (\n          <div key={user.id} className=\"user-card\">\n            <h3>{user.name}</h3>\n            <p>{user.email}</p>\n            <span>{user.isActive ? '🟢 Aktif' : '🔴 Pasif'}</span>\n          </div>\n        ))\n      }\n      {users.filter(u => u.isActive).length === 0 && (\n        <p>Aktif kullanıcı bulunamadı.</p>\n      )}\n    </div>\n  )\n}"
+        },
+        {
+          "type": "code",
+          "title": "KEY Neden Önemli? — Performans ve Doğruluk",
+          "language": "tsx",
+          "content": "// ❌ YANLIŞ: index'i key olarak kullanma!\n{items.map((item, index) => (\n  <li key={index}>{item.name}</li>\n))}\n// Neden kötü?\n// Dizinin başına eleman eklendiğinde TÜM index'ler kayar:\n// Eski: [A(0), B(1), C(2)]\n// Yeni: [X(0), A(1), B(2), C(3)]\n// React, index 0'ın değiştiğini sanır → A'yı X ile değiştirir\n// Aslında sadece X eklendi ama React tüm listeyi günceller!\n\n// ✅ DOĞRU: Benzersiz ve sabit bir değer kullan\n{items.map(item => (\n  <li key={item.id}>{item.name}</li>\n))}\n// item.id hiç değişmez → React sadece yeni eklenen X'i render eder\n// Performans: O(n) yerine O(1) güncelleme!\n\n// Key için uygun değerler:\n// ✅ Veritabanı ID'si (user.id, product.id)\n// ✅ UUID / benzersiz string\n// ✅ Sabit ve benzersiz herhangi bir değer\n// ❌ Math.random() — her render'da değişir, anlamsız\n// ❌ Array index — sıralama değişince sorun çıkar"
+        },
+        {
+          "type": "preview",
+          "title": "UserList component'i ekranda böyle görünür (sadece aktif kullanıcılar)",
+          "content": "<div style='font-family: system-ui;'><h2 style='font-size: 16px; color: #e4e4e7; margin: 0 0 10px 0;'>Kullanıcılar (3)</h2><div style='display: flex; flex-direction: column; gap: 8px;'><div style='padding: 12px; border: 1px solid #3f3f46; border-radius: 10px; background: #18181b;'><h3 style='margin: 0; font-size: 14px; color: #e4e4e7;'>Ali</h3><p style='margin: 2px 0 0; font-size: 12px; color: #71717a;'>ali@mail.com</p><span style='font-size: 11px; color: #4ade80;'>🟢 Aktif</span></div><div style='padding: 12px; border: 1px solid #3f3f46; border-radius: 10px; background: #18181b;'><h3 style='margin: 0; font-size: 14px; color: #e4e4e7;'>Veli</h3><p style='margin: 2px 0 0; font-size: 12px; color: #71717a;'>veli@mail.com</p><span style='font-size: 11px; color: #4ade80;'>🟢 Aktif</span></div></div><p style='color: #71717a; font-size: 11px; margin-top: 8px;'>↑ Ayşe (isActive: false) <code style=\"color:#f87171;\">.filter()</code> ile çıkarıldı. Her kart'ın <code style=\"color:#a78bfa;\">key={user.id}</code> prop'u var.</p></div>"
+        },
+        {
+          "type": "warning",
+          "content": "KEY prop'u component'e prop olarak GEÇİRİLMEZ! key={user.id} yazarsanız, component içinden props.key ile erişemezsiniz. Key sadece React'in iç mekanizması için kullanılır. Eğer ID'ye component içinde ihtiyacınız varsa ayrıca userId={user.id} gibi bir prop geçin."
+        }
+      ]
+    }
+  ]
+}

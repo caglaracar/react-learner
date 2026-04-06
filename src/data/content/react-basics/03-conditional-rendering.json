@@ -1,0 +1,56 @@
+{
+  "id": "conditional-rendering",
+  "title": "3. Conditional Rendering — Koşullu Gösterim",
+  "description": "Koşullu render teknikleri: &&, ternary, early return, switch pattern. Hangi durumda hangisi kullanılır, performans etkileri ve sektördeki en iyi pratikler.",
+  "level": "beginner",
+  "lessons": [
+    {
+      "id": "conditional-basics",
+      "title": "Koşullu Render Yöntemleri — Tam Karşılaştırma",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "React'te if/else JSX içinde kullanılamaz çünkü JSX sadece expression (değer üreten ifade) kabul eder. Bunun yerine 4 temel yöntem vardır. Her birinin kullanım alanı farklıdır."
+        },
+        {
+          "type": "code",
+          "title": "Yöntem 1: && Operatörü — Göster veya Gösterme",
+          "language": "tsx",
+          "content": "// && (logical AND): Koşul true ise sağdakini render et\nfunction Notifications({ count }: { count: number }) {\n  return (\n    <div>\n      <h2>Bildirimler</h2>\n\n      {/* count > 0 ise badge göster, değilse HİÇBİR ŞEY gösterme */}\n      {count > 0 && (\n        <span className=\"badge\">{count} yeni bildirim</span>\n      )}\n\n      {/* Birden fazla koşul */}\n      {count > 0 && count < 100 && (\n        <p>Okunmamış bildirimleriniz var</p>\n      )}\n\n      {/* ⚠️ DİKKAT: Sayı ile && kullanma tuzağı */}\n      {count && <span>Bildirim var</span>}\n      {/* count = 0 ise ekranda \"0\" YAZAR! (falsy ama render edilir) */}\n      {/* Çünkü 0 && <span>...</span> = 0 (React 0'ı render eder) */}\n\n      {/* ✅ Çözüm: Boolean'a çevir */}\n      {count > 0 && <span>Bildirim var</span>}\n      {!!count && <span>Bildirim var</span>}\n      {Boolean(count) && <span>Bildirim var</span>}\n    </div>\n  )\n}"
+        },
+        {
+          "type": "preview",
+          "title": "&& operatörü — count değerine göre ekran çıktısı",
+          "content": "<div style='font-family: system-ui; display: flex; gap: 16px;'><div style='flex: 1; padding: 14px; border: 1px solid #3f3f46; border-radius: 10px; background: #18181b;'><div style='font-size: 11px; color: #71717a; margin-bottom: 6px;'>count = 5</div><h2 style='margin: 0 0 6px; font-size: 14px; color: #e4e4e7;'>Bildirimler</h2><span style='padding: 3px 10px; border-radius: 12px; background: #ef444433; color: #f87171; font-size: 12px; font-weight: 600;'>5 yeni bildirim</span></div><div style='flex: 1; padding: 14px; border: 1px solid #3f3f46; border-radius: 10px; background: #18181b;'><div style='font-size: 11px; color: #71717a; margin-bottom: 6px;'>count = 0</div><h2 style='margin: 0 0 6px; font-size: 14px; color: #e4e4e7;'>Bildirimler</h2><span style='font-size: 12px; color: #71717a;'>← Badge gösterilmiyor (0 > 0 = false)</span></div></div>"
+        },
+        {
+          "type": "code",
+          "title": "Yöntem 2: Ternary Operatörü — İki Durumdan Biri",
+          "language": "tsx",
+          "content": "// condition ? ifTrue : ifFalse\nfunction UserStatus({ isOnline }: { isOnline: boolean }) {\n  return (\n    <div>\n      {/* Basit ternary */}\n      <span>{isOnline ? '🟢 Çevrimiçi' : '🔴 Çevrimdışı'}</span>\n\n      {/* className ile */}\n      <div className={isOnline ? 'text-green-500' : 'text-red-500'}>\n        {isOnline ? 'Aktif' : 'Pasif'}\n      </div>\n\n      {/* Component seçimi */}\n      {isOnline ? <OnlinePanel /> : <OfflineMessage />}\n\n      {/* ⚠️ İç içe ternary KULLANMAYIN — okunmaz! */}\n      {/* ❌ */}\n      {status === 'loading'\n        ? <Spinner />\n        : status === 'error'\n          ? <Error />\n          : status === 'empty'\n            ? <Empty />\n            : <Data />}  {/* Bu kabus! */}\n    </div>\n  )\n}"
+        },
+        {
+          "type": "code",
+          "title": "Yöntem 3: Early Return — En Temiz Yöntem",
+          "language": "tsx",
+          "content": "// Guard clause pattern: Fonksiyonun başında edge case'leri ele al\nfunction UserProfile({ user, isLoading, error }: Props) {\n  // 1. Loading durumu\n  if (isLoading) {\n    return (\n      <div className=\"flex items-center justify-center h-64\">\n        <Spinner size=\"lg\" />\n        <p>Profil yükleniyor...</p>\n      </div>\n    )\n  }\n\n  // 2. Hata durumu\n  if (error) {\n    return (\n      <div className=\"bg-red-500/10 border border-red-500 p-4 rounded-lg\">\n        <h3>Hata Oluştu</h3>\n        <p>{error.message}</p>\n        <button onClick={() => window.location.reload()}>Tekrar Dene</button>\n      </div>\n    )\n  }\n\n  // 3. Veri yok\n  if (!user) {\n    return <p>Kullanıcı bulunamadı.</p>\n  }\n\n  // 4. Ana render — sadece mutlu yol (happy path)\n  return (\n    <div>\n      <h1>{user.name}</h1>\n      <p>{user.email}</p>\n      <p>{user.bio}</p>\n    </div>\n  )\n}\n\n// Sektörde buna 'Guard Clause' denir.\n// Avantajları:\n// - Her durum açıkça ele alınır\n// - İç içe if/else YOK\n// - Ana mantık en sonda, temiz ve okunabilir\n// - TypeScript narrowing ile otomatik tip güvenliği"
+        },
+        {
+          "type": "code",
+          "title": "Yöntem 4: Object Map Pattern — switch Alternatifi",
+          "language": "tsx",
+          "content": "// Birden fazla durum varsa obje map kullan\ntype Status = 'idle' | 'loading' | 'success' | 'error'\n\nfunction StatusDisplay({ status }: { status: Status }) {\n  // Her duruma karşılık gelen component\n  const statusMap: Record<Status, React.ReactNode> = {\n    idle: <p className=\"text-zinc-400\">Bekleniyor...</p>,\n    loading: <Spinner />,\n    success: <p className=\"text-green-400\">✅ Başarılı!</p>,\n    error: <p className=\"text-red-400\">❌ Hata oluştu!</p>,\n  }\n\n  return <div>{statusMap[status]}</div>\n}\n\n// Daha karmaşık örnek: Tab sistemi\nfunction TabContent({ activeTab }: { activeTab: string }) {\n  const tabs: Record<string, React.ReactNode> = {\n    profile: <ProfileTab />,\n    settings: <SettingsTab />,\n    notifications: <NotificationsTab />,\n    billing: <BillingTab />,\n  }\n\n  return tabs[activeTab] ?? <p>Sayfa bulunamadı</p>\n  // ?? = nullish coalescing: null veya undefined ise sağdakini kullan\n}"
+        },
+        {
+          "type": "tip",
+          "content": "Hangi yöntemi ne zaman kullan? && → Göster/gizle (tek durum). Ternary → İki seçenek (A veya B). Early Return → Loading/error/empty durumları (guard clause). Object Map → 3+ durum (tab, status, role bazlı render). Nested ternary ASLA kullanma — kodu okunamaz hale getirir."
+        },
+        {
+          "type": "demo",
+          "content": "&&, ternary ve object map pattern'lerini canlı dene:",
+          "demoId": "conditional"
+        }
+      ]
+    }
+  ]
+}

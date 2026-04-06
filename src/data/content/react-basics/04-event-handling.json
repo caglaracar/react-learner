@@ -1,0 +1,64 @@
+{
+  "id": "event-handling",
+  "title": "4. Event Handling — Olay Yönetimi",
+  "description": "React'te event yönetimi, synthetic events, form events, TypeScript event tipleri ve event delegasyonu. Kullanıcı etkileşimlerini yakalama ve işleme.",
+  "level": "beginner",
+  "lessons": [
+    {
+      "id": "events-basics",
+      "title": "Event Handler Temelleri",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "React'te event'ler HTML'den farklıdır. camelCase yazılır (onclick → onClick), string yerine fonksiyon referansı geçilir. React, tarayıcı event'lerini 'SyntheticEvent' ile sarmalar — tüm tarayıcılarda tutarlı davranış sağlar."
+        },
+        {
+          "type": "code",
+          "title": "Event Handler Tanımlama Yolları",
+          "language": "tsx",
+          "content": "function EventExamples() {\n  // 1. Inline arrow function\n  // Basit işlemler için uygundur\n  return (\n    <button onClick={() => console.log('Tıklandı!')}>\n      Tıkla\n    </button>\n  )\n}\n\nfunction EventExamples2() {\n  // 2. Ayrı fonksiyon tanımla (ÖNERILEN)\n  // Karmaşık mantık için daha okunabilir\n  const handleClick = () => {\n    console.log('Tıklandı!')\n    // API çağrısı, state güncelleme vb.\n  }\n\n  // 3. Event objesine erişim\n  const handleClickWithEvent = (e: React.MouseEvent<HTMLButtonElement>) => {\n    console.log('Tıklanan element:', e.currentTarget)\n    console.log('Mouse pozisyonu:', e.clientX, e.clientY)\n    console.log('Ctrl basılı mı?', e.ctrlKey)\n  }\n\n  // 4. Parametre geçme\n  const handleDelete = (userId: number) => {\n    console.log(`Kullanıcı ${userId} siliniyor...`)\n  }\n\n  return (\n    <div>\n      <button onClick={handleClick}>Tıkla</button>\n      <button onClick={handleClickWithEvent}>Event ile</button>\n\n      {/* ❌ YANLIŞ: Fonksiyonu ÇAĞIRIR (render sırasında!) */}\n      <button onClick={handleDelete(5)}>Sil</button>\n\n      {/* ✅ DOĞRU: Arrow function ile sar */}\n      <button onClick={() => handleDelete(5)}>Sil</button>\n    </div>\n  )\n}"
+        },
+        {
+          "type": "preview",
+          "title": "Event handler çıktısı — butonlara tıklanınca ne olur",
+          "content": "<div style='font-family: system-ui; display: flex; gap: 8px; flex-wrap: wrap;'><button style='padding: 8px 16px; border-radius: 8px; background: #3b82f6; color: white; border: none; font-size: 13px; cursor: pointer;'>Tıkla</button><button style='padding: 8px 16px; border-radius: 8px; background: #6366f1; color: white; border: none; font-size: 13px; cursor: pointer;'>Event ile</button><button style='padding: 8px 16px; border-radius: 8px; background: #ef4444; color: white; border: none; font-size: 13px; cursor: pointer;'>Sil</button></div><div style='margin-top: 10px; padding: 10px; background: #0c0c0c; border-radius: 8px; border: 1px solid #27272a; font-family: monospace; font-size: 12px;'><div style='color: #71717a;'>// Console çıktısı:</div><div style='color: #a1a1aa;'>Tıklandı!</div><div style='color: #a1a1aa;'>Tıklanan element: &lt;button&gt;</div><div style='color: #a1a1aa;'>Mouse pozisyonu: 142, 350</div><div style='color: #a1a1aa;'>Kullanıcı 5 siliniyor...</div></div>"
+        },
+        {
+          "type": "warning",
+          "content": "onClick={handleDelete(5)} yazarsanız fonksiyon HEMEN çalışır (render sırasında)! Çünkü () parantez fonksiyonu çağırır. onClick={() => handleDelete(5)} yazın — bu bir fonksiyon REFERANSI geçer, tıklanınca çalışır."
+        }
+      ]
+    },
+    {
+      "id": "form-events",
+      "title": "Form Event'leri — Input, Select, Textarea",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "Form elementleri React'in en sık kullanılan event'lerini içerir. onChange, onSubmit, onFocus, onBlur gibi event'lerle kullanıcı girişini yönetirsiniz. TypeScript ile event tipleri belirleyerek hata yapma olasılığını sıfıra indirirsiniz."
+        },
+        {
+          "type": "code",
+          "title": "Kontrollü Form — Tam Örnek",
+          "language": "tsx",
+          "content": "import { useState, type FormEvent, type ChangeEvent } from 'react'\n\ninterface FormData {\n  username: string\n  email: string\n  role: 'admin' | 'user'\n  bio: string\n  agreeTerms: boolean\n}\n\nfunction RegistrationForm() {\n  const [form, setForm] = useState<FormData>({\n    username: '',\n    email: '',\n    role: 'user',\n    bio: '',\n    agreeTerms: false,\n  })\n\n  // Genel input handler — tüm input'lar için tek fonksiyon\n  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {\n    const { name, value, type } = e.target\n    setForm(prev => ({\n      ...prev,\n      [name]: type === 'checkbox'\n        ? (e.target as HTMLInputElement).checked\n        : value,\n    }))\n  }\n\n  // Form submit\n  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {\n    e.preventDefault()  // Sayfanın yenilenmesini engelle!\n    console.log('Form verisi:', form)\n    // API'ye gönder...\n  }\n\n  return (\n    <form onSubmit={handleSubmit}>\n      <input\n        name=\"username\"\n        value={form.username}\n        onChange={handleChange}\n        placeholder=\"Kullanıcı adı\"\n      />\n\n      <input\n        name=\"email\"\n        type=\"email\"\n        value={form.email}\n        onChange={handleChange}\n        placeholder=\"E-posta\"\n      />\n\n      <select name=\"role\" value={form.role} onChange={handleChange}>\n        <option value=\"user\">Kullanıcı</option>\n        <option value=\"admin\">Admin</option>\n      </select>\n\n      <textarea\n        name=\"bio\"\n        value={form.bio}\n        onChange={handleChange}\n        placeholder=\"Hakkınızda\"\n      />\n\n      <label>\n        <input\n          name=\"agreeTerms\"\n          type=\"checkbox\"\n          checked={form.agreeTerms}\n          onChange={handleChange}\n        />\n        Şartları kabul ediyorum\n      </label>\n\n      <button type=\"submit\" disabled={!form.agreeTerms}>\n        Kayıt Ol\n      </button>\n    </form>\n  )\n}"
+        },
+        {
+          "type": "code",
+          "title": "TypeScript Event Tipleri — Cheat Sheet",
+          "language": "tsx",
+          "content": "// Her event tipi için doğru TypeScript tipi:\n\n// Mouse event'leri\nonClick:      (e: React.MouseEvent<HTMLButtonElement>) => void\nonDoubleClick:(e: React.MouseEvent<HTMLDivElement>) => void\nonMouseEnter: (e: React.MouseEvent<HTMLDivElement>) => void\n\n// Form event'leri\nonChange:     (e: React.ChangeEvent<HTMLInputElement>) => void\nonSubmit:     (e: React.FormEvent<HTMLFormElement>) => void\nonFocus:      (e: React.FocusEvent<HTMLInputElement>) => void\nonBlur:       (e: React.FocusEvent<HTMLInputElement>) => void\n\n// Klavye event'leri\nonKeyDown:    (e: React.KeyboardEvent<HTMLInputElement>) => void\nonKeyUp:      (e: React.KeyboardEvent<HTMLInputElement>) => void\n\n// Drag & Drop\nonDrag:       (e: React.DragEvent<HTMLDivElement>) => void\nonDrop:       (e: React.DragEvent<HTMLDivElement>) => void\n\n// Touch (mobil)\nonTouchStart: (e: React.TouchEvent<HTMLDivElement>) => void\nonTouchEnd:   (e: React.TouchEvent<HTMLDivElement>) => void\n\n// Scroll\nonScroll:     (e: React.UIEvent<HTMLDivElement>) => void\n\n// Kısayol: Generic element tipi bilmiyorsanız\n// HTMLElement kullanabilirsiniz ama spesifik tip tercih edin."
+        },
+        {
+          "type": "tip",
+          "content": "e.preventDefault() en sık kullanılan event metodu: form submit'te sayfa yenilenmesini, link tıklamada navigasyonu engeller. e.stopPropagation() ise event'in parent elementlere 'bubble' etmesini (yukarı yayılmasını) engeller. İkisini karıştırmayın!"
+        },
+        {
+          "type": "demo",
+          "content": "Kontrollü form örneğini canlı dene — input yaz, validation gör, submit et:",
+          "demoId": "form"
+        }
+      ]
+    }
+  ]
+}

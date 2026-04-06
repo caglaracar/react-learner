@@ -1,0 +1,170 @@
+{
+  "id": "use-state",
+  "title": "5. useState — State Yönetiminin Temeli",
+  "description": "Component içi state yönetiminin temeli. Her state değişiminde component yeniden render olur. State, React'in kalbidir — UI'ınızı canlı tutan mekanizmadır.",
+  "level": "beginner",
+  "lessons": [
+    {
+      "id": "useState-what-is",
+      "title": "State Nedir? Neden Değişkeni Yetmiyor?",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "State, bir component'in 'hafızası'dır. Normal bir let değişkeni kullanırsanız, React değişikliği FARK ETMEZ ve ekranı güncellemez. useState kullandığınızda React, değişikliği bilir ve component'i yeniden render eder — böylece yeni değer ekranda görünür."
+        },
+        {
+          "type": "code",
+          "title": "Normal Değişken vs useState — Kritik Fark",
+          "language": "tsx",
+          "content": "// ❌ ÇALIŞMAZ: Normal değişken kullanma\nfunction BrokenCounter() {\n  let count = 0  // Her render'da 0'a sıfırlanır!\n\n  const handleClick = () => {\n    count = count + 1  // Değer değişir AMA...\n    console.log(count)  // Konsolda artar: 1, 2, 3...\n    // ...React bunu BİLMEZ → ekran güncellenmez!\n    // Ekranda hep 0 görürsünüz.\n  }\n\n  return (\n    <div>\n      <p>Sayaç: {count}</p>  {/* Her zaman 0 gösterir */}\n      <button onClick={handleClick}>Artır</button>\n    </div>\n  )\n}\n\n// ✅ DOĞRU: useState kullan\nimport { useState } from 'react'\n\nfunction WorkingCounter() {\n  const [count, setCount] = useState(0)\n  // count = mevcut değer (okuma)\n  // setCount = değeri güncelleyen fonksiyon (yazma)\n  // 0 = başlangıç değeri (sadece ilk render'da kullanılır)\n\n  const handleClick = () => {\n    setCount(count + 1)  // React'e \"yeni değer 1\" de\n    // React component'i yeniden render eder\n    // count artık 1 → ekran güncellenir!\n  }\n\n  return (\n    <div>\n      <p>Sayaç: {count}</p>  {/* Güncel değeri gösterir */}\n      <button onClick={handleClick}>Artır</button>\n    </div>\n  )\n}"
+        },
+        {
+          "type": "preview",
+          "title": "BrokenCounter vs WorkingCounter — ekranda fark",
+          "content": "<div style='display: flex; gap: 16px; font-family: system-ui;'><div style='flex: 1; padding: 16px; border: 1px solid #ef444466; border-radius: 12px; background: #18181b;'><div style='font-size: 11px; color: #f87171; font-weight: 600; margin-bottom: 8px;'>❌ BrokenCounter</div><p style='font-size: 20px; color: #e4e4e7; margin: 0; text-align: center;'>Sayaç: 0</p><p style='font-size: 10px; color: #71717a; text-align: center; margin: 4px 0 8px;'>← Butona 10 kez tıklasan bile hep 0</p><button style='width: 100%; padding: 6px; border-radius: 8px; background: #3f3f46; color: #a1a1aa; border: none; font-size: 12px;'>Artır (çalışmaz)</button></div><div style='flex: 1; padding: 16px; border: 1px solid #4ade8066; border-radius: 12px; background: #18181b;'><div style='font-size: 11px; color: #4ade80; font-weight: 600; margin-bottom: 8px;'>✅ WorkingCounter</div><p style='font-size: 20px; color: #e4e4e7; margin: 0; text-align: center;'>Sayaç: 3</p><p style='font-size: 10px; color: #71717a; text-align: center; margin: 4px 0 8px;'>← Her tıklamada güncellenir</p><button style='width: 100%; padding: 6px; border-radius: 8px; background: #7c3aed; color: white; border: none; font-size: 12px;'>Artır ✓</button></div></div>"
+        },
+        {
+          "type": "text",
+          "content": "useState'in çalışma mekanizması: 1) setCount(yeniDeger) çağrılır. 2) React, yeni değeri kaydeder. 3) Component fonksiyonu BAŞTAN çalıştırılır (re-render). 4) useState(0) çağrılır ama React başlangıç değerini KULLANMAZ — kayıtlı son değeri döner. 5) Yeni JSX üretilir, Virtual DOM karşılaştırılır, gerçek DOM güncellenir."
+        },
+        {
+          "type": "warning",
+          "content": "State güncellemesi ASENKRON'dur! setCount(1) çağırdıktan hemen sonra count'u okursanız ESKİ değeri görürsünüz. Çünkü güncelleme bir sonraki render'da geçerli olur. Bu React'in en kafa karıştıran özelliğidir — batching (toplu güncelleme) sayesinde performans kazanır."
+        },
+        {
+          "type": "demo",
+          "content": "useState'i canlı dene — sayaç, updater fonksiyonu ve state değişimini gör:",
+          "demoId": "counter"
+        }
+      ]
+    },
+    {
+      "id": "useState-types",
+      "title": "Farklı Veri Tipleriyle State Kullanımı",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "useState ile her türlü JavaScript değerini saklayabilirsiniz: number, string, boolean, array, object, null. TypeScript ile tip güvenliği de ekleyebilirsiniz."
+        },
+        {
+          "type": "code",
+          "title": "Tüm Veri Tipleri ile useState",
+          "language": "tsx",
+          "content": "import { useState } from 'react'\n\nfunction AllStateTypes() {\n  // Sayı\n  const [count, setCount] = useState(0)\n  const [price, setPrice] = useState(99.99)\n\n  // String\n  const [name, setName] = useState('')\n  const [email, setEmail] = useState('user@mail.com')\n\n  // Boolean\n  const [isLoading, setIsLoading] = useState(false)\n  const [isDarkMode, setIsDarkMode] = useState(true)\n\n  // Dizi (Array)\n  const [todos, setTodos] = useState<string[]>([])\n  const [users, setUsers] = useState<User[]>([])\n\n  // Obje\n  const [formData, setFormData] = useState({\n    username: '',\n    password: '',\n    rememberMe: false,\n  })\n\n  // Null olabilir (API'den veri gelene kadar)\n  const [selectedUser, setSelectedUser] = useState<User | null>(null)\n\n  // Union type\n  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')\n\n  return (\n    <div>\n      {/* Boolean toggle */}\n      <button onClick={() => setIsDarkMode(!isDarkMode)}>\n        {isDarkMode ? '🌙 Dark' : '☀️ Light'}\n      </button>\n\n      {/* String input */}\n      <input\n        value={name}\n        onChange={(e) => setName(e.target.value)}\n        placeholder=\"İsminiz\"\n      />\n\n      {/* Status gösterimi */}\n      {status === 'loading' && <p>Yükleniyor...</p>}\n      {status === 'error' && <p>Hata oluştu!</p>}\n      {status === 'success' && <p>Başarılı!</p>}\n    </div>\n  )\n}"
+        },
+        {
+          "type": "tip",
+          "content": "TypeScript ile useState kullanırken, başlangıç değerinden tip çıkarılamıyorsa generic kullanın: useState<User | null>(null). Böylece setSelectedUser(user) çağrısında TypeScript tip kontrolü yapar — yanlış veri tipi geçerseniz derleme hatası alırsınız."
+        },
+        {
+          "type": "demo",
+          "content": "Boolean state ile toggle, accordion ve loading durumlarını canlı dene:",
+          "demoId": "toggle"
+        }
+      ]
+    },
+    {
+      "id": "useState-updater",
+      "title": "Updater Fonksiyonu — Önceki Değere Göre Güncelleme",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "State'i güncellerken önceki değere ihtiyacınız varsa, MUTLAKA updater fonksiyonu kullanın. Direkt değer yerine bir fonksiyon geçerseniz, React size HER ZAMAN en güncel değeri verir. Bu, özellikle birden fazla güncelleme yapıldığında kritiktir."
+        },
+        {
+          "type": "code",
+          "title": "Direkt Değer vs Updater Fonksiyonu",
+          "language": "tsx",
+          "content": "function Counter() {\n  const [count, setCount] = useState(0)\n\n  // ❌ SORUNLU: 3 kez çağırsan bile sadece 1 artar!\n  const handleBadClick = () => {\n    setCount(count + 1)  // count = 0, sonuç: 1\n    setCount(count + 1)  // count HALA 0, sonuç: 1\n    setCount(count + 1)  // count HALA 0, sonuç: 1\n    // Sonuç: count = 1 (3 değil!)\n    // Neden? Çünkü React bu render'daki count'u kullanır (0)\n    // 3 kez \"0 + 1 = 1\" hesaplar → hepsi aynı!\n  }\n\n  // ✅ DOĞRU: Updater fonksiyonu ile\n  const handleGoodClick = () => {\n    setCount(prev => prev + 1)  // prev = 0, sonuç: 1\n    setCount(prev => prev + 1)  // prev = 1, sonuç: 2\n    setCount(prev => prev + 1)  // prev = 2, sonuç: 3\n    // Sonuç: count = 3 ✅\n    // prev her zaman EN GÜNCEL değeri alır\n  }\n\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={handleGoodClick}>+3</button>\n    </div>\n  )\n}\n\n// KURAL: Eğer yeni değer ESKİ değere bağlıysa → updater kullan\n// setCount(prev => prev + 1)     ✅\n// setCount(count + 1)             ❌ (closure tuzağı)\n// setTodos(prev => [...prev, newTodo])  ✅"
+        },
+        {
+          "type": "warning",
+          "content": "React 18'de tüm event handler'lar içindeki state güncellemeleri 'batch' (toplu) edilir. Yani 3 kez setState çağırsanız bile React SADECE 1 KEZ render eder. Bu performans optimizasyonudur. Ama bu yüzden closure'daki (kapatma) eski değeri kullanmamak için updater fonksiyonu şarttır!"
+        }
+      ]
+    },
+    {
+      "id": "useState-immutability",
+      "title": "Immutability — State'i Doğru Güncelleme",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "React'te state'i DOĞRUDAN değiştirmek (mutate etmek) YASAKTIR. Yeni bir kopya oluşturup onu set fonksiyonuna vermelisiniz. Neden? Çünkü React, eski ve yeni değerin referansını karşılaştırır. Aynı objeyi mutate ederseniz referans değişmez → React 'değişmedi' sanır → ekran güncellenmez!"
+        },
+        {
+          "type": "code",
+          "title": "Obje State Güncelleme — Spread Operatörü",
+          "language": "tsx",
+          "content": "interface UserForm {\n  name: string\n  email: string\n  age: number\n  address: {\n    city: string\n    country: string\n  }\n}\n\nfunction ProfileForm() {\n  const [user, setUser] = useState<UserForm>({\n    name: 'Ali',\n    email: 'ali@mail.com',\n    age: 25,\n    address: { city: 'İstanbul', country: 'Türkiye' },\n  })\n\n  // ❌ YANLIŞ: Objeyi doğrudan değiştirme (mutation)\n  const handleBad = () => {\n    user.name = 'Veli'  // Objeyi mutate etti\n    setUser(user)       // Aynı referans → React güncelleme yapmaz!\n  }\n\n  // ✅ DOĞRU: Yeni obje oluştur (spread ile)\n  const handleNameChange = (newName: string) => {\n    setUser(prev => ({\n      ...prev,         // Tüm eski değerleri kopyala\n      name: newName,   // Sadece name'i değiştir\n    }))\n  }\n\n  // ✅ İç içe obje güncelleme (nested spread)\n  const handleCityChange = (newCity: string) => {\n    setUser(prev => ({\n      ...prev,\n      address: {\n        ...prev.address,  // address'in eski değerlerini kopyala\n        city: newCity,     // Sadece city'yi değiştir\n      },\n    }))\n  }\n\n  return (\n    <div>\n      <input\n        value={user.name}\n        onChange={(e) => handleNameChange(e.target.value)}\n      />\n      <p>{user.address.city}, {user.address.country}</p>\n    </div>\n  )\n}"
+        },
+        {
+          "type": "code",
+          "title": "Dizi (Array) State Güncelleme — map, filter, spread",
+          "language": "tsx",
+          "content": "interface Todo {\n  id: number\n  text: string\n  done: boolean\n}\n\nfunction TodoApp() {\n  const [todos, setTodos] = useState<Todo[]>([])\n\n  // EKLEME: Yeni eleman ekle\n  const addTodo = (text: string) => {\n    const newTodo: Todo = { id: Date.now(), text, done: false }\n    setTodos(prev => [...prev, newTodo])  // Eski dizi + yeni eleman\n  }\n\n  // SİLME: ID'ye göre filtrele\n  const removeTodo = (id: number) => {\n    setTodos(prev => prev.filter(todo => todo.id !== id))\n    // filter: koşulu sağlayanları döndürür (id eşit olmayanlar kalır)\n  }\n\n  // GÜNCELLEME: Belirli bir elemanı değiştir\n  const toggleTodo = (id: number) => {\n    setTodos(prev => prev.map(todo =>\n      todo.id === id\n        ? { ...todo, done: !todo.done }  // Bu todo'yu güncelle\n        : todo                           // Diğerlerine dokunma\n    ))\n  }\n\n  // SIRALAMA: Yeni dizi oluştur, sonra sırala\n  const sortTodos = () => {\n    setTodos(prev => [...prev].sort((a, b) => a.text.localeCompare(b.text)))\n    // [...prev] = kopya oluştur (sort orijinali değiştirir!)\n  }\n\n  // ❌ YANLIŞ: push, splice, sort doğrudan\n  // todos.push(newTodo)     // Mutation! React görmez\n  // todos.splice(0, 1)      // Mutation!\n  // todos.sort()             // Mutation! Orijinal diziyi değiştirir\n\n  return (\n    <ul>\n      {todos.map(todo => (\n        <li key={todo.id}>\n          <span style={{ textDecoration: todo.done ? 'line-through' : 'none' }}>\n            {todo.text}\n          </span>\n          <button onClick={() => toggleTodo(todo.id)}>✓</button>\n          <button onClick={() => removeTodo(todo.id)}>✕</button>\n        </li>\n      ))}\n    </ul>\n  )\n}"
+        },
+        {
+          "type": "tip",
+          "content": "Dizi için: EKLEME → [...prev, newItem] veya [newItem, ...prev] (başa). SİLME → prev.filter(). GÜNCELLEME → prev.map(). SIRALAMA → [...prev].sort(). Obje için: HER ZAMAN spread (...) ile yeni obje oluştur. İç içe objelerde her seviyede spread gerekir."
+        },
+        {
+          "type": "demo",
+          "content": "Dizi state yönetimini canlı dene — ekle, sil, tamamla, ilerlemeyi gör:",
+          "demoId": "todo"
+        }
+      ]
+    },
+    {
+      "id": "useState-lazy-init",
+      "title": "Lazy Initialization — Performans Optimizasyonu",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "useState'e başlangıç değeri olarak pahalı bir hesaplama verirseniz, bu hesaplama HER RENDER'DA çalışır (sonucu kullanılmasa bile). Lazy initialization ile hesaplama SADECE ilk render'da çalışır."
+        },
+        {
+          "type": "code",
+          "title": "Lazy Initialization Kullanımı",
+          "language": "tsx",
+          "content": "// ❌ KÖTÜ: Her render'da localStorage okunur (gereksiz!)\nconst [theme, setTheme] = useState(\n  localStorage.getItem('theme') || 'dark'\n  // Bu expression her render'da çalışır\n  // localStorage.getItem() her seferinde çağrılır\n  // Ama sonucu sadece ilk render'da kullanılır!\n)\n\n// ✅ İYİ: Fonksiyon geçir → sadece ilk render'da çalışır\nconst [theme, setTheme] = useState(() => {\n  // Bu fonksiyon SADECE component mount olduğunda çalışır\n  const saved = localStorage.getItem('theme')\n  return saved || 'dark'\n})\n\n// ❌ KÖTÜ: Pahalı hesaplama her render'da çalışır\nconst [data, setData] = useState(expensiveCalculation(rawData))\n\n// ✅ İYİ: Lazy initialization\nconst [data, setData] = useState(() => expensiveCalculation(rawData))\n\n// KURAL:\n// useState(değer)       → değer her render'da hesaplanır\n// useState(() => değer) → değer sadece ilk render'da hesaplanır\n// Fark: () => ile sarmalamak = lazy (tembel) başlatma"
+        },
+        {
+          "type": "tip",
+          "content": "Ne zaman lazy initialization kullanmalı? 1) localStorage/sessionStorage okuma. 2) Pahalı hesaplamalar (büyük dizi filtreleme, sıralama). 3) Başlangıç değeri props'tan türetiliyorsa ve hesaplama ağırsa. Basit değerler için (0, '', false, []) lazy initialization GEREKMEZ."
+        }
+      ]
+    },
+    {
+      "id": "useState-common-mistakes",
+      "title": "En Sık Yapılan useState Hataları",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "useState ile çalışırken sıkça düşülen tuzaklar ve çözümleri. Bu hataları bilmek sizi saatlerce debug etmekten kurtarır."
+        },
+        {
+          "type": "code",
+          "title": "Hata 1: State Güncellendikten Hemen Sonra Okuma",
+          "language": "tsx",
+          "content": "function StaleValueBug() {\n  const [count, setCount] = useState(0)\n\n  const handleClick = () => {\n    setCount(prev => prev + 1)\n    console.log(count)  // ❌ Hala 0 gösterir!\n    // State güncelleme asenkrondur.\n    // Yeni değer bir SONRAKİ render'da geçerli olur.\n\n    // ✅ Çözüm 1: useEffect ile izle\n    // ✅ Çözüm 2: Değeri bir değişkende tut\n    const newCount = count + 1\n    setCount(newCount)\n    console.log(newCount)  // ✅ 1 gösterir\n    // Ama dikkat: updater pattern'da bu çalışmaz\n  }\n}"
+        },
+        {
+          "type": "code",
+          "title": "Hata 2: Gereksiz State Tanımlama",
+          "language": "tsx",
+          "content": "// ❌ YANLIŞ: Türetilebilir (derived) state\nfunction UserList({ users }: { users: User[] }) {\n  const [filteredUsers, setFilteredUsers] = useState(users)\n  const [count, setCount] = useState(users.length)\n  // filteredUsers ve count zaten users'dan türetilebilir!\n  // Ekstra state = ekstra karmaşıklık + senkronizasyon sorunu\n\n  // ✅ DOĞRU: Hesaplayarak türet\n  const filteredUsers = users.filter(u => u.isActive)\n  const count = users.length\n  // State yok → senkronizasyon sorunu yok!\n  // users değişince otomatik hesaplanır\n}\n\n// KURAL: Eğer bir değer başka bir state veya prop'tan\n// HESAPLANABİLİYORSA → state yapma, doğrudan hesapla!\n// Bu 'Single Source of Truth' prensibidir.\n\n// State yapılması GEREKEN şeyler:\n// ✅ Kullanıcı input'u (form alanları)\n// ✅ Toggle durumları (açık/kapalı)\n// ✅ Seçili eleman (selectedId)\n// ✅ Sayfa numarası, sıralama yönü\n\n// State YAPILMAMASI gereken şeyler:\n// ❌ Props'tan türetilebilen değerler\n// ❌ Başka state'ten hesaplanabilen değerler\n// ❌ Sabit değerler (const ile tanımla)"
+        },
+        {
+          "type": "code",
+          "title": "Hata 3: Render İçinde State Güncelleme (Sonsuz Döngü!)",
+          "language": "tsx",
+          "content": "// ❌ SONSUZ DÖNGÜ!\nfunction InfiniteLoop() {\n  const [count, setCount] = useState(0)\n\n  setCount(count + 1)  // Component body'de setState\n  // 1. React render eder\n  // 2. setCount çağrılır → yeniden render tetiklenir\n  // 3. Tekrar setCount çağrılır → yeniden render\n  // 4. SONSUZ DÖNGÜ! Tarayıcı çöker.\n\n  // ✅ State güncelleme SADECE şuralarda yapılmalı:\n  // 1. Event handler'lar (onClick, onChange, onSubmit...)\n  // 2. useEffect içinde (yan etkiler)\n  // 3. useCallback/useMemo gibi hook callback'leri\n\n  return <p>{count}</p>\n}"
+        },
+        {
+          "type": "warning",
+          "content": "Her useState çağrısı, component'in bir render daha yapmasına sebep olur. Gereksiz state tanımlamayın! 5-6'dan fazla useState varsa, muhtemelen useReducer kullanmalısınız veya state'leri bir obje içinde birleştirmelisiniz."
+        }
+      ]
+    }
+  ]
+}

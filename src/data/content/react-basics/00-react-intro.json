@@ -1,0 +1,151 @@
+{
+  "id": "react-intro",
+  "title": "0. React Nedir? — Temelden Başla",
+  "description": "React'in ne olduğu, neden var olduğu, DOM vs Virtual DOM, tarayıcı nasıl çalışır, component mimarisi — her şeyin en başından.",
+  "level": "beginner",
+  "lessons": [
+    {
+      "id": "what-is-react",
+      "title": "React Nedir ve Neden Var?",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "React, Facebook (Meta) tarafından 2013'te açık kaynak olarak yayınlanan bir JavaScript kütüphanesidir. Amacı: kullanıcı arayüzleri (UI) oluşturmak. Angular veya Vue gibi bir 'framework' değildir — sadece UI katmanına odaklanır. Bu yüzden 'library' (kütüphane) olarak adlandırılır."
+        },
+        {
+          "type": "text",
+          "content": "Peki neden React'e ihtiyaç var? Vanilla JavaScript ile de UI yapabilirsiniz. Ama büyük uygulamalarda (binlerce DOM elementi, yüzlerce event listener, sürekli değişen veri) vanilla JS ile kod yönetimi kabus haline gelir. React şu sorunları çözer: 1) Declarative UI — ne görünsün söylersin, nasıl yapılacağını React halleder. 2) Component-based — UI'ı küçük, yeniden kullanılabilir parçalara bölersin. 3) Verimli güncelleme — Virtual DOM sayesinde sadece değişen kısımlar güncellenir."
+        },
+        {
+          "type": "code",
+          "title": "Vanilla JS vs React — Aynı İşi Yapan Kod",
+          "language": "tsx",
+          "content": "// ❌ Vanilla JavaScript — Imperative (adım adım talimat verirsin)\nconst container = document.getElementById('root')\nconst h1 = document.createElement('h1')\nh1.textContent = 'Merhaba Dünya'\nh1.className = 'title'\ncontainer.appendChild(h1)\n\n// Veri değişince? Tüm DOM'u elle güncelle:\nh1.textContent = 'Yeni Başlık'  // her elementi tek tek bul ve güncelle\n\n// ✅ React — Declarative (ne istediğini söylersin)\nfunction App() {\n  const [title, setTitle] = useState('Merhaba Dünya')\n  return <h1 className=\"title\">{title}</h1>\n  // title değişince React otomatik günceller!\n}"
+        },
+        {
+          "type": "preview",
+          "title": "Yukarıdaki kodun tarayıcıdaki çıktısı",
+          "content": "<div style='font-family: system-ui; padding: 8px;'><h1 style='font-size: 24px; font-weight: bold; color: #e4e4e7; margin: 0;'>Merhaba Dünya</h1><p style='color: #71717a; font-size: 13px; margin-top: 8px;'>← Bu &lt;h1&gt; React tarafından DOM'a eklendi. <code style=\"color: #a78bfa;\">setTitle('Yeni Başlık')</code> çağrılırsa React otomatik olarak bu metni günceller.</p></div>"
+        },
+        {
+          "type": "tip",
+          "content": "Imperative = 'Şu elementi bul, textini değiştir, class ekle, DOM'a ekle' (adım adım). Declarative = 'Bu veri ile bu UI'ı göster' (sonucu tanımla). React declarative'dir — sen sadece STATE'i değiştirirsin, React UI'ı otomatik günceller."
+        }
+      ]
+    },
+    {
+      "id": "dom-explained",
+      "title": "DOM Nedir? Tarayıcı Nasıl Çalışır?",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "DOM (Document Object Model), tarayıcının HTML'i anladığı ağaç yapısıdır. Tarayıcı bir HTML dosyası aldığında şu adımları izler: 1) HTML Parse → DOM Tree oluşturulur. 2) CSS Parse → CSSOM (CSS Object Model) oluşturulur. 3) DOM + CSSOM birleşir → Render Tree. 4) Layout — her elementin ekrandaki pozisyonu hesaplanır. 5) Paint — pikseller ekrana çizilir. 6) Composite — katmanlar birleştirilir."
+        },
+        {
+          "type": "code",
+          "title": "HTML → DOM Tree Dönüşümü",
+          "language": "html",
+          "content": "<!-- Bu HTML: -->\n<div id=\"app\">\n  <h1>Başlık</h1>\n  <p>Paragraf</p>\n</div>\n\n<!-- Şu DOM ağacına dönüşür:\n\n  document\n    └── html\n        ├── head\n        └── body\n            └── div#app\n                ├── h1\n                │   └── \"Başlık\" (text node)\n                └── p\n                    └── \"Paragraf\" (text node)\n-->"
+        },
+        {
+          "type": "text",
+          "content": "DOM manipülasyonu PAHALIDIR. Neden? Çünkü her DOM değişikliği potansiyel olarak Layout → Paint → Composite döngüsünü tetikler. Buna 'reflow' ve 'repaint' denir. Örneğin bir elementin width'ini değiştirirsen, tarayıcı TÜM etkilenen elementlerin pozisyonunu yeniden hesaplar. 1000 elementin olduğu bir sayfada bu çok yavaş olabilir."
+        },
+        {
+          "type": "code",
+          "title": "DOM Manipülasyonu Neden Yavaş?",
+          "language": "tsx",
+          "content": "// ❌ KÖTÜ: Her satırda DOM'a dokunuyor → 1000 reflow!\nfor (let i = 0; i < 1000; i++) {\n  const div = document.createElement('div')\n  div.textContent = `Item ${i}`\n  document.body.appendChild(div)  // Her seferinde reflow!\n}\n\n// ✅ İYİ: Fragment kullan → tek reflow\nconst fragment = document.createDocumentFragment()\nfor (let i = 0; i < 1000; i++) {\n  const div = document.createElement('div')\n  div.textContent = `Item ${i}`\n  fragment.appendChild(div)  // Bellekte, DOM'da değil\n}\ndocument.body.appendChild(fragment)  // Tek seferde DOM'a ekle"
+        },
+        {
+          "type": "warning",
+          "content": "DOM manipülasyonu yavaş olduğu için React, Virtual DOM kullanır. Değişiklikleri önce bellekte (JavaScript objesi olarak) hesaplar, sonra minimum DOM güncellemesi yapar. Bu React'in en önemli performans optimizasyonudur."
+        }
+      ]
+    },
+    {
+      "id": "virtual-dom",
+      "title": "Virtual DOM ve Reconciliation Algoritması",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "Virtual DOM, gerçek DOM'un hafif bir JavaScript kopyasıdır. React her render'da yeni bir Virtual DOM ağacı oluşturur, eskisiyle karşılaştırır (diffing), ve sadece FARKLI olan kısımları gerçek DOM'a uygular. Bu sürece 'Reconciliation' (uzlaştırma) denir."
+        },
+        {
+          "type": "code",
+          "title": "Virtual DOM Nasıl Çalışır — Adım Adım",
+          "language": "tsx",
+          "content": "// 1. Component'in ilk render'ı\nfunction Counter() {\n  const [count, setCount] = useState(0)\n  return (\n    <div>\n      <h1>Sayaç</h1>\n      <p>{count}</p>\n      <button onClick={() => setCount(count + 1)}>Artır</button>\n    </div>\n  )\n}\n\n// React şu Virtual DOM'u oluşturur (basitleştirilmiş):\n// {\n//   type: 'div',\n//   children: [\n//     { type: 'h1', children: 'Sayaç' },\n//     { type: 'p',  children: '0' },          ← count = 0\n//     { type: 'button', children: 'Artır' }\n//   ]\n// }\n\n// 2. Butona tıklanır → setCount(1) → yeni Virtual DOM:\n// {\n//   type: 'div',\n//   children: [\n//     { type: 'h1', children: 'Sayaç' },\n//     { type: 'p',  children: '1' },          ← count = 1 (DEĞİŞTİ!)\n//     { type: 'button', children: 'Artır' }\n//   ]\n// }\n\n// 3. React iki ağacı karşılaştırır (diffing):\n//    - h1 aynı → DOKUNMA\n//    - p değişti (0 → 1) → GÜNCELLE\n//    - button aynı → DOKUNMA\n// Sonuç: Sadece <p> elementinin textContent'i güncellenir!"
+        },
+        {
+          "type": "text",
+          "content": "Reconciliation algoritmasının kuralları: 1) Farklı TYPE'a sahip elementler tamamen yeniden oluşturulur (div → span = sil ve yeniden yap). 2) Aynı type'a sahip elementlerde sadece değişen ATTRIBUTE'lar güncellenir. 3) Listeler için KEY prop'u kullanılır — React hangi elemanın eklendiğini/silindiğini/taşındığını anlar. KEY olmazsa React tüm listeyi yeniden render eder!"
+        },
+        {
+          "type": "tip",
+          "content": "React 18+ ile gelen 'Concurrent Mode' sayesinde React, render işlemini bölebilir. Uzun süren render'lar kullanıcı etkileşimini bloklamaz. Bu, React'in en büyük avantajlarından biridir — büyük uygulamalarda bile 60fps akıcılık sağlar."
+        },
+        {
+          "type": "demo",
+          "content": "Virtual DOM'un diffing algoritmasını canlı izle:",
+          "demoId": "virtual-dom"
+        }
+      ]
+    },
+    {
+      "id": "component-architecture",
+      "title": "Component Mimarisi — UI'ı Parçalara Böl",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "React'te her şey COMPONENT'tir. Bir buton, bir form, bir sayfa, hatta tüm uygulama birer component'tir. Component'ler LEGO gibidir — küçük parçaları birleştirerek büyük yapılar oluşturursun. Her component kendi state'ini (verisini) ve davranışını (event handler'larını) yönetir."
+        },
+        {
+          "type": "code",
+          "title": "Component Hiyerarşisi — Gerçek Dünya Örneği",
+          "language": "tsx",
+          "content": "// Bir e-ticaret sayfası component ağacı:\n//\n// App\n// ├── Header\n// │   ├── Logo\n// │   ├── SearchBar\n// │   └── CartIcon (itemCount: 3)\n// ├── ProductList\n// │   ├── ProductCard (product: iPhone)\n// │   │   ├── ProductImage\n// │   │   ├── ProductTitle\n// │   │   ├── ProductPrice\n// │   │   └── AddToCartButton\n// │   ├── ProductCard (product: MacBook)\n// │   └── ProductCard (product: AirPods)\n// └── Footer\n\n// Her biri bağımsız bir component:\nfunction ProductCard({ product }) {\n  return (\n    <div className=\"card\">\n      <ProductImage src={product.image} />\n      <ProductTitle>{product.name}</ProductTitle>\n      <ProductPrice amount={product.price} />\n      <AddToCartButton productId={product.id} />\n    </div>\n  )\n}\n\n// ProductCard 100 kez kullanılabilir, her seferinde farklı veri ile!"
+        },
+        {
+          "type": "text",
+          "content": "Component türleri: 1) Presentational (Sunum) Component — sadece UI gösterir, veri almaz. Örnek: Button, Card, Badge. 2) Container (Akıllı) Component — veri çeker, state yönetir, çocuklara veri geçer. Örnek: UserListPage, DashboardContainer. 3) Layout Component — sayfa yapısını belirler. Örnek: Sidebar, Grid, Stack. Sektörde buna 'Component Composition Pattern' denir."
+        },
+        {
+          "type": "preview",
+          "title": "ProductCard component'i ekranda böyle görünür",
+          "content": "<div style='display: flex; gap: 12px;'><div style='border: 1px solid #3f3f46; border-radius: 12px; padding: 16px; width: 160px; background: #18181b;'><div style='width: 100%; height: 80px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 8px; margin-bottom: 10px; display:flex; align-items:center; justify-content:center; color:white; font-size:24px;'>📱</div><div style='font-size: 14px; font-weight: 600; color: #e4e4e7;'>iPhone 15</div><div style='font-size: 13px; color: #a78bfa; margin-top: 4px;'>₺64.999</div><button style='margin-top: 8px; width:100%; padding: 6px; border-radius: 8px; background: #7c3aed; color: white; border: none; font-size: 12px; cursor: pointer;'>🛒 Sepete Ekle</button></div><div style='border: 1px solid #3f3f46; border-radius: 12px; padding: 16px; width: 160px; background: #18181b;'><div style='width: 100%; height: 80px; background: linear-gradient(135deg, #3b82f6, #06b6d4); border-radius: 8px; margin-bottom: 10px; display:flex; align-items:center; justify-content:center; color:white; font-size:24px;'>💻</div><div style='font-size: 14px; font-weight: 600; color: #e4e4e7;'>MacBook Pro</div><div style='font-size: 13px; color: #a78bfa; margin-top: 4px;'>₺84.999</div><button style='margin-top: 8px; width:100%; padding: 6px; border-radius: 8px; background: #7c3aed; color: white; border: none; font-size: 12px; cursor: pointer;'>🛒 Sepete Ekle</button></div><div style='border: 1px solid #3f3f46; border-radius: 12px; padding: 16px; width: 160px; background: #18181b;'><div style='width: 100%; height: 80px; background: linear-gradient(135deg, #10b981, #34d399); border-radius: 8px; margin-bottom: 10px; display:flex; align-items:center; justify-content:center; color:white; font-size:24px;'>🎧</div><div style='font-size: 14px; font-weight: 600; color: #e4e4e7;'>AirPods Pro</div><div style='font-size: 13px; color: #a78bfa; margin-top: 4px;'>₺9.999</div><button style='margin-top: 8px; width:100%; padding: 6px; border-radius: 8px; background: #7c3aed; color: white; border: none; font-size: 12px; cursor: pointer;'>🛒 Sepete Ekle</button></div></div><p style='color: #71717a; font-size: 12px; margin-top: 12px;'>↑ Aynı <code style=\"color:#a78bfa;\">ProductCard</code> component'i 3 kez kullanıldı — her biri farklı props aldı. Bu component composition'ın gücü!</p>"
+        },
+        {
+          "type": "tip",
+          "content": "Her component TEK BİR ŞEY yapmalıdır (Single Responsibility Principle). Bir component hem veri çekiyor, hem form yönetiyor, hem de stil veriyorsa — onu parçala! Küçük component'ler test etmesi, debug etmesi ve yeniden kullanması kolaydır."
+        }
+      ]
+    },
+    {
+      "id": "dev-environment",
+      "title": "Geliştirme Ortamı — Node.js, npm, Vite",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "React projesi geliştirmek için şu araçlara ihtiyacın var: 1) Node.js — JavaScript'i tarayıcı dışında çalıştıran runtime. V8 engine (Chrome'un JS motoru) üzerine kurulu. 2) npm (Node Package Manager) — paket yöneticisi. React, TailwindCSS gibi kütüphaneleri yükler. 3) Vite — geliştirme sunucusu ve bundler. Kodunu tarayıcının anlayacağı hale getirir (JSX → JS, TypeScript → JS, modülleri birleştirir)."
+        },
+        {
+          "type": "code",
+          "title": "Proje Yapısı ve Dosyaların Görevi",
+          "language": "bash",
+          "content": "learn-react-proj/\n├── node_modules/        # Yüklenen tüm paketler (GIT'e EKLEME!)\n├── public/              # Statik dosyalar (favicon, resimler)\n├── src/                 # TÜM kaynak kodun buradadır\n│   ├── main.tsx         # Uygulamanın GİRİŞ NOKTASI\n│   ├── App.tsx          # Ana component\n│   ├── index.css        # Global stiller\n│   ├── components/      # Yeniden kullanılabilir UI parçaları\n│   ├── pages/           # Sayfa component'leri\n│   └── data/            # Veri dosyaları\n├── index.html           # Tek HTML dosyası (SPA!)\n├── package.json         # Proje bilgileri + bağımlılıklar\n├── tsconfig.json        # TypeScript ayarları\n└── vite.config.ts       # Vite (bundler) ayarları"
+        },
+        {
+          "type": "code",
+          "title": "main.tsx — Her Şey Buradan Başlar",
+          "language": "tsx",
+          "content": "// main.tsx — Uygulamanın giriş noktası\nimport { StrictMode } from 'react'\nimport { createRoot } from 'react-dom/client'\nimport './index.css'       // Global stiller\nimport App from './App'    // Ana component\n\n// 1. HTML'deki <div id=\"root\"> elementini bul\n// 2. React'i o elementin içine 'mount' et (bağla)\n// 3. <App /> component'ini render et\ncreateRoot(document.getElementById('root')!).render(\n  <StrictMode>\n    <App />\n  </StrictMode>\n)\n\n// StrictMode: Geliştirme ortamında hataları yakalar.\n// Production'da hiçbir etkisi yoktur.\n// Component'leri 2 kez render eder — side effect'leri tespit etmek için."
+        },
+        {
+          "type": "warning",
+          "content": "SPA (Single Page Application) = Tek HTML dosyası! Sayfa geçişlerinde tarayıcı yeni HTML indirmez. React, DOM'u JavaScript ile günceller. Bu yüzden ilk yükleme biraz yavaş olabilir (tüm JS indirilir) ama sonraki gezinmeler anında olur."
+        }
+      ]
+    }
+  ]
+}

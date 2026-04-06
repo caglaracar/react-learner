@@ -1,0 +1,58 @@
+{
+  "id": "use-ref",
+  "title": "7. useRef — Referanslar ve Mutable Değerler",
+  "description": "DOM elementlerine erişim ve render'lar arasında değer saklama (re-render tetiklemeden). useRef, React'in 'kaçış kapısı'dır — DOM'a doğrudan erişmeniz gerektiğinde kullanırsınız.",
+  "level": "beginner",
+  "lessons": [
+    {
+      "id": "useRef-dom",
+      "title": "DOM Referansları — Elemana Direkt Erişim",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "React normalde DOM'u sizin için yönetir — siz sadece JSX yazarsınız, React DOM'u günceller. Ama bazen DOM elementine doğrudan erişmeniz gerekir: input'a focus vermek, scroll pozisyonunu okumak, canvas üzerine çizmek gibi. useRef ile bir DOM elementine 'referans' tutabilirsiniz."
+        },
+        {
+          "type": "code",
+          "title": "useRef ile DOM Erişimi — Pratik Örnekler",
+          "language": "tsx",
+          "content": "import { useRef, useEffect } from 'react'\n\n// 1. Input'a Otomatik Focus\nfunction SearchBar() {\n  const inputRef = useRef<HTMLInputElement>(null)\n  // inputRef.current → DOM elementi (veya null)\n\n  useEffect(() => {\n    // Component mount olduğunda input'a focus ver\n    inputRef.current?.focus()\n  }, [])\n\n  return (\n    <input\n      ref={inputRef}  // Bu input'un DOM referansını inputRef'e bağla\n      placeholder=\"Ara...\"\n    />\n  )\n}\n\n// 2. Scroll Kontrolü\nfunction ChatMessages({ messages }: { messages: Message[] }) {\n  const bottomRef = useRef<HTMLDivElement>(null)\n\n  // Yeni mesaj geldiğinde en alta scroll et\n  useEffect(() => {\n    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })\n  }, [messages])  // messages değişince çalışır\n\n  return (\n    <div className=\"h-96 overflow-y-auto\">\n      {messages.map(msg => (\n        <div key={msg.id}>{msg.text}</div>\n      ))}\n      <div ref={bottomRef} />  {/* Görünmez anchor element */}\n    </div>\n  )\n}\n\n// 3. Video/Audio Kontrolü\nfunction VideoPlayer({ src }: { src: string }) {\n  const videoRef = useRef<HTMLVideoElement>(null)\n\n  const handlePlay = () => videoRef.current?.play()\n  const handlePause = () => videoRef.current?.pause()\n  const handleSeek = (time: number) => {\n    if (videoRef.current) {\n      videoRef.current.currentTime = time\n    }\n  }\n\n  return (\n    <div>\n      <video ref={videoRef} src={src} />\n      <button onClick={handlePlay}>▶ Oynat</button>\n      <button onClick={handlePause}>⏸ Durdur</button>\n      <button onClick={() => handleSeek(0)}>⏮ Başa Sar</button>\n    </div>\n  )\n}"
+        },
+        {
+          "type": "preview",
+          "title": "SearchBar ve VideoPlayer — DOM referansları ile kontrol",
+          "content": "<div style='font-family: system-ui; display: flex; flex-direction: column; gap: 12px;'><div style='padding: 14px; border: 1px solid #3f3f46; border-radius: 10px; background: #18181b;'><div style='font-size: 11px; color: #a78bfa; margin-bottom: 6px;'>SearchBar — autoFocus</div><input style='width: 100%; padding: 8px 12px; border-radius: 8px; background: #09090b; border: 1px solid #6366f1; color: #e4e4e7; font-size: 13px; outline: none;' placeholder='Ara... (otomatik focus!)' /></div><div style='padding: 14px; border: 1px solid #3f3f46; border-radius: 10px; background: #18181b;'><div style='font-size: 11px; color: #a78bfa; margin-bottom: 6px;'>VideoPlayer — ref ile kontrol</div><div style='width: 100%; height: 60px; background: #09090b; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #71717a; font-size: 12px; margin-bottom: 8px;'>🎬 Video alanı</div><div style='display: flex; gap: 6px;'><button style='flex:1; padding: 6px; border-radius: 6px; background: #22c55e; color: white; border: none; font-size: 11px;'>▶ Oynat</button><button style='flex:1; padding: 6px; border-radius: 6px; background: #eab308; color: white; border: none; font-size: 11px;'>⏸ Durdur</button><button style='flex:1; padding: 6px; border-radius: 6px; background: #6366f1; color: white; border: none; font-size: 11px;'>⏮ Başa Sar</button></div></div></div>"
+        },
+        {
+          "type": "tip",
+          "content": "useRef<HTMLInputElement>(null) — TypeScript'e 'bu ref bir input elementine bağlanacak' diyorsunuz. Bu sayede inputRef.current?.focus() gibi metotlarda TypeScript otomatik tamamlama ve tip kontrolü sağlar. null başlangıç değeri, component mount olmadan önce henüz DOM elementi yok demektir."
+        }
+      ]
+    },
+    {
+      "id": "useRef-mutable",
+      "title": "Mutable Values — Re-render Olmadan Değer Saklama",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "useRef'in ikinci kullanım alanı: render'lar arasında değer saklamak AMA re-render tetiklememek. useState'den farkı: useState değişince component yeniden render olur, useRef değişince OLMAZ. Timer ID'leri, önceki değerler, flag'ler gibi 'sessiz' verileri saklamak için idealdir."
+        },
+        {
+          "type": "code",
+          "title": "useState vs useRef Karşılaştırma",
+          "language": "tsx",
+          "content": "import { useState, useRef, useEffect } from 'react'\n\nfunction RenderCounter() {\n  const [count, setCount] = useState(0)\n  const renderCount = useRef(0)\n\n  // Her render'da artır (ama re-render tetiklemez!)\n  renderCount.current += 1\n\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <p>Bu component {renderCount.current} kez render edildi</p>\n      <button onClick={() => setCount(c => c + 1)}>Artır</button>\n    </div>\n  )\n  // setCount → re-render → renderCount artar → ama kendi başına render tetiklemez\n}\n\n// Önceki Değeri Saklama (usePrevious pattern)\nfunction PriceTracker({ price }: { price: number }) {\n  const prevPrice = useRef(price)\n\n  useEffect(() => {\n    prevPrice.current = price  // Her render sonrası güncelle\n  }, [price])\n\n  const diff = price - prevPrice.current\n\n  return (\n    <div>\n      <p>Fiyat: {price} TL</p>\n      <p>\n        {diff > 0 && '📈 '}\n        {diff < 0 && '📉 '}\n        {diff === 0 && '➡️ '}\n        Değişim: {diff > 0 ? '+' : ''}{diff} TL\n      </p>\n    </div>\n  )\n}\n\n// Timer ID Saklama\nfunction Stopwatch() {\n  const [seconds, setSeconds] = useState(0)\n  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)\n\n  const start = () => {\n    if (intervalRef.current) return  // Zaten çalışıyorsa tekrar başlatma\n    intervalRef.current = setInterval(() => {\n      setSeconds(s => s + 1)\n    }, 1000)\n  }\n\n  const stop = () => {\n    if (intervalRef.current) {\n      clearInterval(intervalRef.current)\n      intervalRef.current = null\n    }\n  }\n\n  const reset = () => {\n    stop()\n    setSeconds(0)\n  }\n\n  // Cleanup: component unmount olursa timer'ı temizle\n  useEffect(() => {\n    return () => stop()\n  }, [])\n\n  return (\n    <div>\n      <p>{seconds} saniye</p>\n      <button onClick={start}>Başlat</button>\n      <button onClick={stop}>Durdur</button>\n      <button onClick={reset}>Sıfırla</button>\n    </div>\n  )\n}"
+        },
+        {
+          "type": "warning",
+          "content": "KURAL: useState → Değiştiğinde ekranı güncellemek istiyorsanız. useRef → Değiştiğinde ekranı güncellemeye GEREK YOKSA (timer ID, DOM ref, önceki değer, flag). Yanlış seçim: useRef ile UI verisi saklarsanız ekran güncellenmez. useState ile timer ID saklarsanız her setState'te gereksiz render olur."
+        },
+        {
+          "type": "demo",
+          "content": "useRef'i canlı dene — DOM erişimi (focus, select) ve render sayacını gör:",
+          "demoId": "ref"
+        }
+      ]
+    }
+  ]
+}

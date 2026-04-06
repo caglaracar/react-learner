@@ -1,0 +1,87 @@
+{
+  "id": "props-children",
+  "title": "2. Props & Children — Veri Akışı",
+  "description": "Component'ler arası veri aktarımı. Props, children, default props, spread pattern ve TypeScript ile tip güvenliği. React'te veri TEK YÖNLÜ akar: yukarıdan aşağıya.",
+  "level": "beginner",
+  "lessons": [
+    {
+      "id": "props-basics",
+      "title": "Props Nedir? One-Way Data Flow",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "Props (properties), parent component'ten child component'e veri aktarmanın yoludur. HTML attribute'larına benzer ama çok daha güçlüdür — string, number, boolean, array, object, fonksiyon, hatta başka component'ler bile geçirebilirsiniz. Kritik kural: Props READ-ONLY'dir — child component, aldığı prop'ları DEĞİŞTİREMEZ."
+        },
+        {
+          "type": "text",
+          "content": "React'te veri akışı TEK YÖNLÜDÜR (unidirectional): Parent → Child. Bu 'One-Way Data Flow' prensibi, uygulamanızı tahmin edilebilir kılar. Veri nereden geldi? Parent'tan. Veri nereye gidiyor? Child'a. Debugging çok kolay — veriyi yukarıdan aşağıya takip edin."
+        },
+        {
+          "type": "code",
+          "title": "Props Kullanımı — TypeScript ile Tip Güvenliği",
+          "language": "tsx",
+          "content": "// 1. Interface ile prop tiplerini tanımla\ninterface UserCardProps {\n  name: string                    // Zorunlu\n  email: string                   // Zorunlu\n  age?: number                    // Opsiyonel (? işareti)\n  isActive?: boolean              // Opsiyonel, default: undefined\n  role: 'admin' | 'user' | 'mod'  // Union type — sadece bu 3 değer\n  onEdit: (id: number) => void    // Callback fonksiyon prop\n  avatar?: React.ReactNode        // JSX kabul eden prop\n}\n\n// 2. Component tanımı — destructuring ile props al\nfunction UserCard({\n  name,\n  email,\n  age,\n  isActive = false,  // Default değer: props geçilmezse false olur\n  role,\n  onEdit,\n  avatar,\n}: UserCardProps) {\n  return (\n    <div className={`card ${isActive ? 'active' : ''}`}>\n      {avatar && <div className=\"avatar\">{avatar}</div>}\n      <h3>{name}</h3>\n      <p>{email}</p>\n      {age !== undefined && <p>Yaş: {age}</p>}\n      <span className={`badge badge-${role}`}>{role}</span>\n      <button onClick={() => onEdit(42)}>Düzenle</button>\n    </div>\n  )\n}\n\n// 3. Kullanım — parent'tan props geçme\nfunction App() {\n  const handleEdit = (userId: number) => {\n    console.log(`Düzenleniyor: ${userId}`)\n  }\n\n  return (\n    <UserCard\n      name=\"Çağlar\"\n      email=\"caglar@mail.com\"\n      age={25}\n      isActive={true}\n      role=\"admin\"\n      onEdit={handleEdit}\n      avatar={<img src=\"/avatar.jpg\" alt=\"\" />}\n    />\n    // TypeScript burada tip kontrolü yapar:\n    // role=\"invalid\" yazarsanız → derleme HATASI!\n    // name prop'unu geçmezseniz → derleme HATASI!\n  )\n}"
+        },
+        {
+          "type": "preview",
+          "title": "UserCard component'i ekranda böyle görünür",
+          "content": "<div style='border: 1px solid #3f3f46; border-radius: 12px; padding: 16px; background: #18181b; max-width: 280px; border-left: 3px solid #4ade80;'><div style='display: flex; align-items: center; gap: 10px; margin-bottom: 10px;'><div style='width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #a78bfa); display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;'>Ç</div><div><h3 style='margin: 0; font-size: 15px; color: #e4e4e7;'>Çağlar</h3><p style='margin: 0; font-size: 12px; color: #71717a;'>caglar@mail.com</p></div></div><p style='font-size: 13px; color: #a1a1aa; margin: 4px 0;'>Yaş: 25</p><div style='display: flex; align-items: center; justify-content: space-between; margin-top: 10px;'><span style='padding: 3px 10px; border-radius: 6px; background: #7c3aed33; color: #c4b5fd; font-size: 11px; font-weight: 600;'>👑 admin</span><button style='padding: 5px 14px; border-radius: 6px; background: #3b82f6; color: white; border: none; font-size: 12px; cursor: pointer;'>Düzenle</button></div></div><p style='color: #71717a; font-size: 11px; margin-top: 8px;'>↑ name, email, age, role, onEdit, avatar — hepsi parent'tan prop olarak geldi</p>"
+        },
+        {
+          "type": "tip",
+          "content": "TypeScript'in en büyük avantajı: yanlış prop geçerseniz ÇALIŞMADAN ÖNCE hata alırsınız. Runtime'da (kullanıcının tarayıcısında) değil, geliştirme sırasında. Bu, büyük projelerde binlerce bug'ı önler. Sektörde buna 'shift-left testing' denir — hataları mümkün olduğunca erken yakalayın."
+        }
+      ]
+    },
+    {
+      "id": "children-prop",
+      "title": "Children Prop — Component Composition",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "children, özel bir prop'tur. Component etiketlerinin ARASINA yazdığınız her şey children olarak geçer. Bu pattern sayesinde 'wrapper' ve 'layout' component'ler yapabilirsiniz — HTML'deki <div> gibi ama özelleştirilmiş."
+        },
+        {
+          "type": "code",
+          "title": "Children ile Wrapper/Layout Component'leri",
+          "language": "tsx",
+          "content": "// 1. Basit Wrapper: Card\ninterface CardProps {\n  title?: string\n  children: React.ReactNode  // ReactNode: string, number, element, null, array...\n}\n\nfunction Card({ title, children }: CardProps) {\n  return (\n    <div className=\"border border-zinc-700 rounded-xl overflow-hidden\">\n      {title && (\n        <div className=\"px-4 py-3 border-b border-zinc-700 bg-zinc-800\">\n          <h3 className=\"font-semibold\">{title}</h3>\n        </div>\n      )}\n      <div className=\"p-4\">{children}</div>\n    </div>\n  )\n}\n\n// Kullanım — children olarak ne isterseniz koyun\n<Card title=\"Kullanıcı Bilgisi\">\n  <p>İsim: Ali</p>\n  <p>Email: ali@mail.com</p>\n  <button>Düzenle</button>\n</Card>\n\n<Card title=\"İstatistikler\">\n  <Chart data={salesData} />\n</Card>\n\n// 2. Layout Component\ninterface LayoutProps {\n  header: React.ReactNode\n  sidebar: React.ReactNode\n  children: React.ReactNode\n}\n\nfunction DashboardLayout({ header, sidebar, children }: LayoutProps) {\n  return (\n    <div className=\"min-h-screen\">\n      <header className=\"h-16 border-b\">{header}</header>\n      <div className=\"flex\">\n        <aside className=\"w-64 border-r\">{sidebar}</aside>\n        <main className=\"flex-1 p-6\">{children}</main>\n      </div>\n    </div>\n  )\n}\n\n// Kullanım\n<DashboardLayout\n  header={<Navbar />}\n  sidebar={<Sidebar />}\n>\n  <UserList />   {/* Bu children olarak geçer */}\n</DashboardLayout>"
+        },
+        {
+          "type": "preview",
+          "title": "Card component'i children ile böyle görünür",
+          "content": "<div style='max-width: 300px;'><div style='border: 1px solid #3f3f46; border-radius: 12px; overflow: hidden; background: #18181b;'><div style='padding: 10px 16px; border-bottom: 1px solid #3f3f46; background: #27272a;'><h3 style='margin: 0; font-size: 14px; font-weight: 600; color: #e4e4e7;'>Kullanıcı Bilgisi</h3></div><div style='padding: 16px;'><p style='margin: 0 0 4px; font-size: 13px; color: #a1a1aa;'>İsim: Ali</p><p style='margin: 0 0 8px; font-size: 13px; color: #a1a1aa;'>Email: ali@mail.com</p><button style='padding: 6px 16px; border-radius: 8px; background: #3b82f6; color: white; border: none; font-size: 12px; cursor: pointer;'>Düzenle</button></div></div><p style='color: #71717a; font-size: 11px; margin-top: 8px;'>↑ <code style=\"color:#a78bfa;\">title</code> prop header'ı oluşturdu. Ortadaki p ve button ise <code style=\"color:#4ade80;\">children</code> olarak geçti.</p></div>"
+        },
+        {
+          "type": "tip",
+          "content": "React'te inheritance (class extends) KULLANMAYIN. Her zaman composition (children, props, render props) tercih edin. Bu, React'in resmi önerisidir. Composition daha esnek, daha okunabilir ve daha test edilebilirdir."
+        }
+      ]
+    },
+    {
+      "id": "props-patterns",
+      "title": "İleri Props Pattern'leri — Spread, Rest, Forwarding",
+      "blocks": [
+        {
+          "type": "text",
+          "content": "Büyük projelerde props yönetimi karmaşıklaşır. Spread/rest operatörleri ve prop forwarding ile kodu temiz tutabilirsiniz."
+        },
+        {
+          "type": "code",
+          "title": "Spread & Rest Props — Gerçek Dünya",
+          "language": "tsx",
+          "content": "// 1. Spread: Obje'nin tüm property'lerini prop olarak geç\nconst user = { name: 'Ali', email: 'ali@mail.com', age: 25 }\n\n// ❌ Tek tek geçmek\n<UserCard name={user.name} email={user.email} age={user.age} />\n\n// ✅ Spread ile\n<UserCard {...user} />\n// Eşdeğer: name=\"Ali\" email=\"ali@mail.com\" age={25}\n\n// 2. Rest: Bilinen props'ları al, kalanını geç\ninterface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {\n  variant: 'primary' | 'secondary' | 'danger'\n  isLoading?: boolean\n}\n\nfunction Button({ variant, isLoading, children, ...rest }: ButtonProps) {\n  // rest = onClick, disabled, className, type, vb.\n  // HTML button'un tüm native prop'larını destekler!\n  return (\n    <button\n      className={`btn btn-${variant}`}\n      disabled={isLoading || rest.disabled}\n      {...rest}  // Kalan tüm prop'ları button'a geç\n    >\n      {isLoading ? 'Yükleniyor...' : children}\n    </button>\n  )\n}\n\n// Kullanım — native HTML attribute'ları da geçebilirsin\n<Button variant=\"primary\" onClick={handleSave} type=\"submit\">\n  Kaydet\n</Button>\n\n<Button variant=\"danger\" disabled aria-label=\"Sil\">\n  Sil\n</Button>"
+        },
+        {
+          "type": "warning",
+          "content": "Prop drilling sorunu: Bir veriyi 5 seviye aşağıya geçirmek için her ara component'e props eklemek gerekir. Bu kodu karmaşıklaştırır. Çözümler: 1) Component Composition — ara component'leri children ile bypass et. 2) Context API — global veri paylaşımı. 3) Zustand/Redux — state management kütüphanesi."
+        },
+        {
+          "type": "demo",
+          "content": "Props akışını canlı gör — parent'tan child'a veri nasıl geçer:",
+          "demoId": "props"
+        }
+      ]
+    }
+  ]
+}
